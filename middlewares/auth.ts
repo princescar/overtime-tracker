@@ -1,4 +1,4 @@
-import { getRequiredEnvVar } from "#lib/env";
+import { getRequiredEnvVar } from "#/lib/env";
 import { RequestHandler } from "@hattip/compose";
 
 declare module "@hattip/compose" {

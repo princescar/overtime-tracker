@@ -1,11 +1,11 @@
 import { createRouter } from "@hattip/router";
 import { z } from "zod";
 import { isAfter } from "date-fns";
-import { BalanceService } from "#services";
+import { BalanceService } from "#/services";
 import {
   createErrorResponse,
   createSuccessResponse,
-} from "#lib/responseFormatter";
+} from "#/lib/responseFormatter";
 
 const balanceService = new BalanceService();
 const router = createRouter();

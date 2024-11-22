@@ -11,10 +11,7 @@
     "typeRoots": ["./node_modules/@types", "./@types"],
     "baseUrl": ".",
     "paths": {
-      "#services": ["./services/index"],
-      "#models": ["./models/index"],
-      "#lib/*": ["./lib/*"],
-      "#components/*": ["./components/*"]
+      "#/*": ["./*"],
     }
   },
   "include": ["**/*.ts", "**/*.tsx", "@types/**/*.d.ts"]

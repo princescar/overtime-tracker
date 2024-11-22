@@ -1,5 +1,5 @@
 import { ClientSession, FilterQuery } from "mongoose";
-import { User, BalanceHistory, IBalanceHistoryDocument } from "#models";
+import { User, BalanceHistory, IBalanceHistoryDocument } from "#/models";
 
 interface GetBalanceHistoryInput {
   userId: string;

@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "hattip --client",
-    "build": "NODE_ENV=production hattip build",
+    "build": "NODE_ENV=production hattip build --client",
     "lint": "tsc --noEmit && eslint --flag unstable_ts_config"
   },
   "dependencies": {

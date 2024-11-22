@@ -1,10 +1,10 @@
 import { createRouter, RouterContext } from "@hattip/router";
 import { z } from "zod";
-import { WorklogService } from "#services";
+import { WorklogService } from "#/services";
 import {
   createErrorResponse,
   createSuccessResponse,
-} from "#lib/responseFormatter";
+} from "#/lib/responseFormatter";
 
 const worklogService = new WorklogService();
 const router = createRouter();

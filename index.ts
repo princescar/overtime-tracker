@@ -1,9 +1,9 @@
 import dotenv from "dotenv";
 import { compose } from "@hattip/compose";
 import { renderPage } from "vike/server";
-import { connectDB } from "#lib/db";
-import authHandler from "./middlewares/auth";
-import apiHandler from "./api";
+import { connectDB } from "#/lib/db";
+import authHandler from "#/middlewares/auth";
+import apiHandler from "#/api";
 
 // Load environment variables from .env file
 dotenv.config();
