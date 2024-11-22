@@ -7,7 +7,7 @@ declare global {
   interface IBalanceHistory {
     id: string;
     userId: string;
-    amount: number; // in minutes (negative for deductions)
+    amount: number;
     timestamp: Date;
     worklogId: string;
     type: BalanceChangeType;

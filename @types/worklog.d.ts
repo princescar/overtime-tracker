@@ -5,7 +5,7 @@ declare global {
     BUSINESS_TRIP = "BUSINESS_TRIP",
   }
 
-  const enum WorklogStatus {
+  enum WorklogStatus {
     IN_PROGRESS = "IN_PROGRESS",
     COMPLETED = "COMPLETED",
   }
