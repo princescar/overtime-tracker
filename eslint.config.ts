@@ -1,3 +1,5 @@
+import { resolve } from "path";
+import { includeIgnoreFile } from "@eslint/compat";
 import tsPlugin from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
 import reactPlugin from "eslint-plugin-react";
@@ -6,6 +8,7 @@ import prettierRecommended from "eslint-plugin-prettier/recommended";
 import globals from "globals";
 
 export default [
+  includeIgnoreFile(resolve(__dirname, ".gitignore")),
   {
     files: ["**/*.{ts,tsx}"],
     languageOptions: {
