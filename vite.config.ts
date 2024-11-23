@@ -13,6 +13,9 @@ export default defineConfig({
         build: {
           target: "esnext",
         },
+        ssr: {
+          noExternal: true,
+        },
       },
     }),
   ],
