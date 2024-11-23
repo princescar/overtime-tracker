@@ -1,7 +1,8 @@
 import { FilterQuery } from "mongoose";
 import { isAfter } from "date-fns";
 import { BalanceService } from "./balance.service";
-import { IWorklogDocument, User, Worklog } from "#/models";
+import { IWorklog, WorkLocation, WorklogStatus } from "#/models";
+import { IWorklogDocument, User, Worklog } from "#/models/db";
 import { validateDate, validateWorkLocation } from "#/lib/validation";
 import { withTransaction } from "#/lib/db";
 import { getRequiredNumericEnvVar } from "#/lib/env";

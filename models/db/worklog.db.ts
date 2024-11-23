@@ -1,4 +1,5 @@
 import { Schema, model, Document } from "mongoose";
+import { IWorklog, WorkLocation } from "../worklog";
 
 export interface IWorklogDocument extends Omit<IWorklog, "id">, Document {}
 

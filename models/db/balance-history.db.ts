@@ -1,13 +1,5 @@
 import mongoose, { Document } from "mongoose";
-
-export interface IBalanceHistory {
-  userId: string;
-  amount: number;
-  timestamp: Date;
-  type: BalanceChangeType;
-  description: string;
-  worklogId?: string;
-}
+import { BalanceChangeType, IBalanceHistory } from "../balance";
 
 export interface IBalanceHistoryDocument
   extends Omit<IBalanceHistory, "id">,
@@ -31,8 +23,8 @@ const balanceHistorySchema = new mongoose.Schema<IBalanceHistoryDocument>(
     },
     type: {
       type: String,
-      required: true,
       enum: Object.values(BalanceChangeType),
+      required: true,
     },
     description: {
       type: String,
@@ -40,8 +32,8 @@ const balanceHistorySchema = new mongoose.Schema<IBalanceHistoryDocument>(
     },
     worklogId: {
       type: String,
-      required: false,
       ref: "Worklog",
+      required: false,
     },
   },
   {

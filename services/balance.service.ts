@@ -1,5 +1,6 @@
 import { ClientSession, FilterQuery } from "mongoose";
-import { User, BalanceHistory, IBalanceHistoryDocument } from "#/models";
+import { BalanceChangeType } from "#/models";
+import { User, BalanceHistory, IBalanceHistoryDocument } from "#/models/db";
 
 interface GetBalanceHistoryInput {
   userId: string;

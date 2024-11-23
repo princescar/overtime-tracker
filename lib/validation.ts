@@ -1,3 +1,5 @@
+import { WorkLocation } from "#/models";
+
 /**
  * Validate work location
  */

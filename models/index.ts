@@ -1,3 +1,3 @@
-export * from "./user.model";
-export * from "./worklog.model";
-export * from "./balance-history.model";
+export * from "./balance";
+export * from "./user";
+export * from "./worklog";

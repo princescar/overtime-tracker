@@ -1,4 +1,5 @@
 import mongoose, { Document } from "mongoose";
+import { IUser } from "../user";
 
 export interface IUserDocument extends Omit<IUser, "id">, Document {}
 
