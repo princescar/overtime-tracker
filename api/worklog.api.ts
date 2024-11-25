@@ -166,7 +166,7 @@ export default (app: Router) => {
   app.get("/api/worklogs", async (context) => {
     try {
       const userId = context.user.id;
-      const params = context.url.searchParams;
+      const queryParams = Object.fromEntries(context.url.searchParams);
 
       const { startDate, endDate, status } = z
         .object({
@@ -174,7 +174,7 @@ export default (app: Router) => {
           endDate: z.coerce.date().optional(),
           status: z.nativeEnum(WorklogStatus).optional(),
         })
-        .parse(params);
+        .parse(queryParams);
 
       const worklogs = await worklogService.getUserWorks({
         userId,

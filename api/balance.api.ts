@@ -26,14 +26,14 @@ export default (app: Router) => {
   // Get balance history
   app.get("/api/balance/history", async (context) => {
     try {
-      const params = context.url.searchParams;
+      const queryParams = Object.fromEntries(context.url.searchParams);
 
       const { startDate, endDate } = z
         .object({
           startDate: z.coerce.date().optional(),
           endDate: z.coerce.date().optional(),
         })
-        .parse(params);
+        .parse(queryParams);
 
       // Validate date range
       if (startDate && endDate && !isAfter(endDate, startDate)) {
