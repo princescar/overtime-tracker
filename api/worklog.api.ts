@@ -102,12 +102,12 @@ export default (app: Router) => {
       const userId = context.user.id;
       const body = (await context.request.json()) as unknown;
 
-      const { startTime, endTime, description, location } = z
+      const { startTime, endTime, location, description } = z
         .object({
-          startTime: z.coerce.date(),
-          endTime: z.coerce.date(),
-          description: z.string().optional(),
+          startTime: z.string(),
+          endTime: z.string(),
           location: z.nativeEnum(WorkLocation),
+          description: z.string().optional(),
         })
         .parse(body);
 
@@ -115,8 +115,8 @@ export default (app: Router) => {
         userId,
         startTime,
         endTime,
-        description,
         location,
+        description,
       });
 
       return createSuccessResponse(worklog);

@@ -8,7 +8,7 @@ const WorklogSchema = new Schema<IWorklogDocument>(
     userId: { type: String, required: true, ref: "User" },
     startTime: { type: Date, required: true },
     endTime: { type: Date, required: false },
-    description: { type: String, required: true },
+    description: { type: String },
     location: {
       type: String,
       required: true,
