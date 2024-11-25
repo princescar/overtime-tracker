@@ -26,6 +26,7 @@ initApiHandlers(app);
 app.use(async (context) => {
   const { httpResponse } = await renderPage({
     urlOriginal: context.url.toString(),
+    user: context.user,
   });
   const { body, statusCode, headers } = httpResponse;
   return new Response(body, {
