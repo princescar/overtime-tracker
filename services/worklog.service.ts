@@ -1,5 +1,5 @@
-import { isAfter } from "date-fns";
 import { FilterQuery, Types } from "mongoose";
+import { isAfter, isSameMinute, startOfMinute } from "date-fns";
 import { BalanceService } from "./balance.service";
 import { IWorklog, WorkLocation, WorklogStatus } from "#/models";
 import { IWorklogDocument, User, Worklog } from "#/models/db";
@@ -63,7 +63,7 @@ export class WorklogService {
     // Validate inputs
     validateDate(startTime, "startTime");
     validateWorkLocation(location);
-    const parsedStartTime = new Date(startTime);
+    const parsedStartTime = startOfMinute(startTime);
 
     // Validate work time constraints
     this.validateWorkTime(parsedStartTime);
@@ -100,7 +100,6 @@ export class WorklogService {
       startTime: parsedStartTime,
       description,
       location,
-      endTime: null,
     });
 
     return this.toWorklog(worklog);
@@ -114,7 +113,7 @@ export class WorklogService {
 
     // Validate inputs
     validateDate(endTime, "endTime");
-    const parsedEndTime = new Date(endTime);
+    const parsedEndTime = startOfMinute(endTime);
 
     // Find and validate worklog
     const worklog = await Worklog.findOne({
@@ -134,7 +133,12 @@ export class WorklogService {
     this.validateWorkTime(worklog.startTime, parsedEndTime);
 
     // Check for overlapping work sessions
-    await this.validateNoOverlap(userId, worklog.startTime, parsedEndTime);
+    await this.validateNoOverlap(
+      userId,
+      worklog.startTime,
+      parsedEndTime,
+      worklogId,
+    );
 
     // Calculate cost
     const cost = this.calculateCost(worklog.startTime, parsedEndTime);
@@ -179,7 +183,7 @@ export class WorklogService {
 
     if (startTime) {
       validateDate(startTime, "startTime");
-      const parsedStartTime = new Date(startTime);
+      const parsedStartTime = startOfMinute(startTime);
       // Validate new start time
       this.validateWorkTime(parsedStartTime);
       worklog.startTime = parsedStartTime;
@@ -208,11 +212,8 @@ export class WorklogService {
     validateDate(startTime, "startTime");
     validateDate(endTime, "endTime");
     validateWorkLocation(location);
-    const parsedStartTime = new Date(startTime);
-    const parsedEndTime = new Date(endTime);
-
-    // Find user and validate
-    await this.balanceService.validateBalance(userId);
+    const parsedStartTime = startOfMinute(startTime);
+    const parsedEndTime = startOfMinute(endTime);
 
     // Validate work time constraints
     this.validateWorkTime(parsedStartTime, parsedEndTime);
@@ -328,9 +329,9 @@ export class WorklogService {
     }
 
     if (status === WorklogStatus.IN_PROGRESS) {
-      query.endTime = { $exists: false };
+      query.$or = [{ endTime: { $exists: false } }, { endTime: null }];
     } else if (status === WorklogStatus.COMPLETED) {
-      query.endTime = { $exists: true };
+      query.$and = [{ endTime: { $exists: true } }, { endTime: { $ne: null } }];
     }
 
     const worklogs = await Worklog.find(query).sort({ startTime: -1 });
@@ -345,7 +346,7 @@ export class WorklogService {
   private validateWorkTime(startTime: Date, endTime?: Date) {
     if (endTime) {
       // Validate end time is after start time
-      if (isAfter(startTime, endTime)) {
+      if (isAfter(startTime, endTime) || isSameMinute(startTime, endTime)) {
         throw new Error("End time must be after start time");
       }
     }
@@ -362,9 +363,17 @@ export class WorklogService {
   ): Promise<void> {
     const query: FilterQuery<IWorklogDocument> = {
       userId,
-      startTime: { $lt: endTime },
-      endTime: { $gt: startTime },
       deleted: { $ne: true }, // Don't consider deleted worklogs for overlap
+      $or: [
+        {
+          startTime: { $lte: endTime },
+          endTime: { $gte: startTime },
+        },
+        {
+          startTime: { $lte: endTime },
+          endTime: { $exists: false },
+        },
+      ],
     };
 
     if (excludeWorklogId) {
