@@ -1,5 +1,5 @@
-import { FilterQuery } from "mongoose";
 import { isAfter } from "date-fns";
+import { FilterQuery, Types } from "mongoose";
 import { BalanceService } from "./balance.service";
 import { IWorklog, WorkLocation, WorklogStatus } from "#/models";
 import { IWorklogDocument, User, Worklog } from "#/models/db";
@@ -392,7 +392,7 @@ export class WorklogService {
    */
   private toWorklog(doc: IWorklogDocument): IWorklog {
     return {
-      id: doc.id as string,
+      id: (doc._id as Types.ObjectId).toString(),
       userId: doc.userId,
       startTime: doc.startTime,
       endTime: doc.endTime,
