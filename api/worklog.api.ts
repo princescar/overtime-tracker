@@ -96,8 +96,8 @@ export default (app: Router) => {
     },
   );
 
-  // Create completed worklog
-  app.post("/api/worklogs", async (context) => {
+  // Create completed work
+  app.post("/api/worklogs/completed", async (context) => {
     try {
       const userId = context.user.id;
       const body = (await context.request.json()) as unknown;
