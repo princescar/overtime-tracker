@@ -136,7 +136,6 @@ export class WorklogService {
     const savedWorklog = await withTransaction(async (session) => {
       // Update worklog
       worklog.endTime = parsedEndTime;
-      worklog.cost = cost;
       const savedWorklog = await worklog.save({ session });
 
       // Deduct cost from user's balance atomically with balance check
@@ -381,7 +380,6 @@ export class WorklogService {
       endTime: doc.endTime,
       description: doc.description,
       location: doc.location,
-      cost: doc.cost,
     };
   }
 }

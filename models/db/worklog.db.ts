@@ -14,7 +14,6 @@ const WorklogSchema = new Schema<IWorklogDocument>(
       required: true,
       enum: Object.values(WorkLocation),
     },
-    cost: { type: Number, required: false },
   },
   {
     timestamps: true,

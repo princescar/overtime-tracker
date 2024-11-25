@@ -16,5 +16,4 @@ export interface IWorklog {
   endTime?: Date;
   description?: string;
   location: WorkLocation;
-  cost?: number;
 }
