@@ -15,7 +15,7 @@ await connectDB();
 if (getEnvVar("NODE_ENV", "development") === "production") {
   // Use variable to cheat the build check.
   const serverEntryPoint = "./entry.mjs";
-  await import(serverEntryPoint);
+  await import(/* @vite-ignore */ serverEntryPoint);
 }
 
 const app = createRouter();
