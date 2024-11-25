@@ -46,11 +46,13 @@ interface GetWorklogInput {
   userId: string;
 }
 
-interface GetUserWorksInput {
+interface QueryWorklogsInput {
   userId: string;
   startDate?: Date | string;
   endDate?: Date | string;
   status?: WorklogStatus;
+  page?: number;
+  limit?: number;
 }
 
 export class WorklogService {
@@ -294,14 +296,8 @@ export class WorklogService {
   /**
    * Get user's worklogs with optional filters
    */
-  async getUserWorks(input: GetUserWorksInput): Promise<IWorklog[]> {
-    const { userId, startDate, endDate, status } = input;
-
-    // Validate user exists
-    const user = await User.findById(userId);
-    if (!user) {
-      throw new Error("User not found");
-    }
+  async queryWorklogs(input: QueryWorklogsInput): Promise<IWorklog[]> {
+    const { userId, startDate, endDate, status, page = 1, limit = 10 } = input;
 
     const query: FilterQuery<IWorklogDocument> = {
       userId,
@@ -334,7 +330,11 @@ export class WorklogService {
       query.$and = [{ endTime: { $exists: true } }, { endTime: { $ne: null } }];
     }
 
-    const worklogs = await Worklog.find(query).sort({ startTime: -1 });
+    const skip = (page - 1) * limit;
+    const worklogs = await Worklog.find(query)
+      .sort({ startTime: -1 })
+      .skip(skip)
+      .limit(limit);
     return worklogs.map((doc) => this.toWorklog(doc));
   }
 

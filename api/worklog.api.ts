@@ -165,23 +165,28 @@ export default (app: Router) => {
       const userId = context.user.id;
       const queryParams = Object.fromEntries(context.url.searchParams);
 
-      const { startDate, endDate, status } = z
+      const { startDate, endDate, status, page, limit } = z
         .object({
           startDate: z.coerce.date().optional(),
           endDate: z.coerce.date().optional(),
           status: z.nativeEnum(WorklogStatus).optional(),
+          page: z.coerce.number().min(1).optional(),
+          limit: z.coerce.number().min(1).optional(),
         })
         .parse(queryParams);
 
-      const worklogs = await worklogService.getUserWorks({
+      const worklogs = await worklogService.queryWorklogs({
         userId,
         startDate,
         endDate,
         status,
+        page,
+        limit,
       });
 
       return createSuccessResponse(worklogs);
     } catch (error) {
+      console.error("Error querying worklogs:", error);
       return createErrorResponse(error);
     }
   });
