@@ -2,7 +2,7 @@ import { FilterQuery, Types } from "mongoose";
 import { isAfter, isSameMinute, startOfMinute } from "date-fns";
 import { BalanceService } from "./balance.service";
 import { IWorklog, WorkLocation, WorklogStatus } from "#/models";
-import { IWorklogDocument, User, Worklog } from "#/models/db";
+import { IWorklogDocument, Worklog } from "#/models/db";
 import { validateDate, validateWorkLocation } from "#/lib/validation";
 import { withTransaction } from "#/lib/db";
 import { getRequiredNumericEnvVar } from "#/lib/env";

@@ -10,7 +10,6 @@ import {
   startOfWeek,
   differenceInMinutes,
   isSameMinute,
-  isBefore,
 } from "date-fns";
 import {
   Container,
@@ -25,7 +24,6 @@ import {
   Card,
   Group,
   TextInput,
-  NavLink,
   Anchor,
 } from "@mantine/core";
 import { DateTimePicker } from "@mantine/dates";
@@ -444,7 +442,6 @@ export function Page() {
   const [startWorkModalOpen, setStartWorkModalOpen] = useState(false);
   const [createCompletedModalOpen, setCreateCompletedModalOpen] =
     useState(false);
-  const [creatingCompletedWork, setCreatingCompletedWork] = useState(false);
   const [selectedWorklogId, setSelectedWorklogId] = useState<string | null>(
     null,
   );
@@ -456,46 +453,53 @@ export function Page() {
     initialWorklogs.length < itemsPerPage ? false : true,
   );
 
+  const request = async <T,>(
+    url: string,
+    method = "GET",
+    body?: unknown,
+  ): Promise<T> => {
+    const response = await fetch(url, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    if (response.ok) {
+      const data = (await response.json()) as ApiResponse<T>;
+      if (data.success) {
+        return data.data;
+      } else {
+        throw new Error(data.error || "Unknown server error");
+      }
+    } else {
+      throw new Error(`Request failed with status: ${response.status}`);
+    }
+  };
+
+  const showError = (error: unknown) => {
+    notifications.show({
+      color: "red",
+      title: "Error",
+      message: error instanceof Error ? error.message : String(error),
+    });
+  };
+
   const fetchWorklogs = async (pageNum: number) => {
     if (loading) return;
 
     setLoading(true);
     try {
-      const response = await fetch(
+      const worklogs = await request<IWorklog[]>(
         `/api/worklogs?page=${pageNum}&limit=${itemsPerPage}`,
       );
-      if (response.ok) {
-        const data = (await response.json()) as ApiResponse<IWorklog[]>;
-        if (data.success) {
-          if (data.data.length < itemsPerPage) {
-            setHasMore(false);
-          }
-          setWorklogs((prev) =>
-            pageNum === 1 ? data.data : [...prev, ...data.data],
-          );
-        } else {
-          notifications.show({
-            color: "red",
-            title: "Error",
-            message: data.error || "Failed to fetch worklogs",
-          });
-        }
-      } else {
-        const errorData = await response.json();
-        notifications.show({
-          color: "red",
-          title: "Error",
-          message: errorData.error || "Failed to fetch worklogs",
-        });
+      if (worklogs.length < itemsPerPage) {
+        setHasMore(false);
       }
+      setWorklogs((prev) => [...prev, ...worklogs]);
     } catch (error) {
       console.error("Error fetching worklogs:", error);
-      notifications.show({
-        color: "red",
-        title: "Error",
-        message:
-          error instanceof Error ? error.message : "Failed to fetch worklogs",
-      });
+      showError(error);
     } finally {
       setLoading(false);
     }
@@ -512,101 +516,32 @@ export function Page() {
   const completeWork = async (worklogId: string, endTime: Date) => {
     setCompletingWorklog(true);
     try {
-      const response = await fetch(`/api/worklogs/${worklogId}/complete`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      const worklog = await request<IWorklog>(
+        `/api/worklogs/${worklogId}/complete`,
+        "POST",
+        {
           endTime: endTime.toISOString(),
-        }),
-      });
-      if (response.ok) {
-        const data = (await response.json()) as ApiResponse<IWorklog>;
-        if (data.success) {
-          setWorklogs((prev) =>
-            prev.map((w) => (w.id === worklogId ? data.data : w)),
-          );
-          setInProgressWork(undefined);
+        },
+      );
 
-          // Fetch latest worklogs and balance
-          await Promise.all([
-            // Fetch worklogs
-            fetch(`/api/worklogs?page=1&limit=${itemsPerPage}`).then(
-              async (worklogsResponse) => {
-                if (worklogsResponse.ok) {
-                  const worklogsData =
-                    (await worklogsResponse.json()) as ApiResponse<IWorklog[]>;
-                  if (worklogsData.success) {
-                    setWorklogs(worklogsData.data);
-                    setPage(1);
-                    setHasMore(worklogsData.data.length === itemsPerPage);
-                  } else {
-                    notifications.show({
-                      color: "red",
-                      title: "Error",
-                      message:
-                        worklogsData.error || "Failed to refresh worklogs",
-                    });
-                  }
-                } else {
-                  const errorData = await worklogsResponse.json();
-                  notifications.show({
-                    color: "red",
-                    title: "Error",
-                    message: errorData.error || "Failed to refresh worklogs",
-                  });
-                }
-              },
-            ),
-            // Fetch balance
-            fetch("/api/balance").then(async (balanceResponse) => {
-              if (balanceResponse.ok) {
-                const balanceData =
-                  (await balanceResponse.json()) as ApiResponse<number>;
-                if (balanceData.success) {
-                  setBalance(balanceData.data);
-                } else {
-                  notifications.show({
-                    color: "red",
-                    title: "Error",
-                    message: balanceData.error || "Failed to refresh balance",
-                  });
-                }
-              } else {
-                const errorData =
-                  (await balanceResponse.json()) as ApiResponse<undefined>;
-                notifications.show({
-                  color: "red",
-                  title: "Error",
-                  message: errorData.error || "Failed to refresh balance",
-                });
-              }
-            }),
-          ]);
-        } else {
-          notifications.show({
-            color: "red",
-            title: "Error",
-            message: data.error || "Failed to complete work",
-          });
-        }
-      } else {
-        const errorData = await response.json();
-        notifications.show({
-          color: "red",
-          title: "Error",
-          message: errorData.error || "Failed to complete work",
-        });
-      }
+      setWorklogs((prev) =>
+        prev.map((w) => (w.id === worklogId ? worklog : w)),
+      );
+      setInProgressWork(undefined);
+
+      // Refresh data
+      const [refreshedWorklogs, newBalance] = await Promise.all([
+        request<IWorklog[]>(`/api/worklogs?page=1&limit=${itemsPerPage}`),
+        request<number>("/api/balance"),
+      ]);
+
+      setWorklogs(refreshedWorklogs);
+      setBalance(newBalance);
+      setPage(1);
+      setHasMore(refreshedWorklogs.length === itemsPerPage);
     } catch (error) {
       console.error("Error completing worklog:", error);
-      notifications.show({
-        color: "red",
-        title: "Error",
-        message:
-          error instanceof Error ? error.message : "Failed to complete work",
-      });
+      showError(error);
     } finally {
       setCompletingWorklog(false);
       setMarkWorkCompleteModalOpen(false);
@@ -617,36 +552,11 @@ export function Page() {
   const cancelWork = async (worklogId: string) => {
     setCancellingWorklog(true);
     try {
-      const response = await fetch(`/api/worklogs/${worklogId}`, {
-        method: "DELETE",
-      });
-      if (response.ok) {
-        const data = (await response.json()) as ApiResponse<void>;
-        if (data.success) {
-          setInProgressWork(undefined);
-        } else {
-          notifications.show({
-            color: "red",
-            title: "Error",
-            message: data.error || "Failed to cancel work",
-          });
-        }
-      } else {
-        const errorData = await response.json();
-        notifications.show({
-          color: "red",
-          title: "Error",
-          message: errorData.error || "Failed to cancel work",
-        });
-      }
+      await request(`/api/worklogs/${worklogId}`, "DELETE");
+      setInProgressWork(undefined);
     } catch (error) {
       console.error("Error cancelling worklog:", error);
-      notifications.show({
-        color: "red",
-        title: "Error",
-        message:
-          error instanceof Error ? error.message : "Failed to cancel work",
-      });
+      showError(error);
     } finally {
       setCancellingWorklog(false);
     }
@@ -658,154 +568,35 @@ export function Page() {
     description?: string,
   ) => {
     try {
-      const response = await fetch("/api/worklogs/start", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          startTime: startTime.toISOString(),
-          location,
-          description,
-        }),
+      const worklog = await request<IWorklog>("/api/worklogs/start", "POST", {
+        startTime: startTime.toISOString(),
+        location,
+        description,
       });
-      if (response.ok) {
-        const data = (await response.json()) as ApiResponse<IWorklog>;
-        if (data.success) {
-          setInProgressWork(data.data);
-        } else {
-          notifications.show({
-            color: "red",
-            title: "Error",
-            message: data.error || "Failed to start work",
-          });
-        }
-      } else {
-        const errorData = await response.json();
-        notifications.show({
-          color: "red",
-          title: "Error",
-          message: errorData.error || "Failed to start work",
-        });
-      }
+      setInProgressWork(worklog);
     } catch (error) {
       console.error("Error starting work:", error);
-      notifications.show({
-        color: "red",
-        title: "Error",
-        message:
-          error instanceof Error ? error.message : "Failed to start work",
-      });
-    } finally {
-      setStartWorkModalOpen(false);
+      showError(error);
     }
   };
 
-  const createCompletedWork = async (
+  const logCompletedWork = async (
     startTime: Date,
     endTime: Date,
     location: WorkLocation,
     description?: string,
   ) => {
-    setCreatingCompletedWork(true);
     try {
-      const response = await fetch("/api/worklogs/completed", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          startTime: startTime.toISOString(),
-          endTime: endTime.toISOString(),
-          location,
-          description,
-        }),
+      const worklog = await request<IWorklog>("/api/worklogs", "POST", {
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
+        location,
+        description,
       });
-      if (response.ok) {
-        const data = (await response.json()) as ApiResponse<IWorklog>;
-        if (data.success) {
-          // Fetch latest worklogs and balance
-          await Promise.all([
-            // Fetch worklogs
-            fetch(`/api/worklogs?page=1&limit=${itemsPerPage}`).then(
-              async (worklogsResponse) => {
-                if (worklogsResponse.ok) {
-                  const worklogsData =
-                    (await worklogsResponse.json()) as ApiResponse<IWorklog[]>;
-                  if (worklogsData.success) {
-                    setWorklogs(worklogsData.data);
-                    setPage(1);
-                    setHasMore(worklogsData.data.length === itemsPerPage);
-                  } else {
-                    notifications.show({
-                      color: "red",
-                      title: "Error",
-                      message:
-                        worklogsData.error || "Failed to refresh worklogs",
-                    });
-                  }
-                } else {
-                  const errorData = await worklogsResponse.json();
-                  notifications.show({
-                    color: "red",
-                    title: "Error",
-                    message: errorData.error || "Failed to refresh worklogs",
-                  });
-                }
-              },
-            ),
-            // Fetch balance
-            fetch("/api/balance").then(async (balanceResponse) => {
-              if (balanceResponse.ok) {
-                const balanceData =
-                  (await balanceResponse.json()) as ApiResponse<number>;
-                if (balanceData.success) {
-                  setBalance(balanceData.data);
-                } else {
-                  notifications.show({
-                    color: "red",
-                    title: "Error",
-                    message: balanceData.error || "Failed to refresh balance",
-                  });
-                }
-              } else {
-                const errorData = await balanceResponse.json();
-                notifications.show({
-                  color: "red",
-                  title: "Error",
-                  message: errorData.error || "Failed to refresh balance",
-                });
-              }
-            }),
-          ]);
-        } else {
-          notifications.show({
-            color: "red",
-            title: "Error",
-            message: data.error || "Failed to create completed work",
-          });
-        }
-      } else {
-        const errorData = await response.json();
-        notifications.show({
-          color: "red",
-          title: "Error",
-          message: errorData.error || "Failed to create completed work",
-        });
-      }
+      setWorklogs((prev) => [worklog, ...prev]);
     } catch (error) {
-      console.error("Error creating completed work:", error);
-      notifications.show({
-        color: "red",
-        title: "Error",
-        message:
-          error instanceof Error
-            ? error.message
-            : "Failed to create completed work",
-      });
-    } finally {
-      setCreatingCompletedWork(false);
-      setCreateCompletedModalOpen(false);
+      console.error("Error logging completed work:", error);
+      showError(error);
     }
   };
 
@@ -1020,7 +811,7 @@ export function Page() {
         opened={createCompletedModalOpen}
         onClose={() => setCreateCompletedModalOpen(false)}
         onConfirm={(startTime, endTime, location, description) =>
-          void createCompletedWork(startTime, endTime, location, description)
+          void logCompletedWork(startTime, endTime, location, description)
         }
       />
       <StartWorkModal
