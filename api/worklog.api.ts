@@ -126,24 +126,21 @@ export default (app: Router) => {
   });
 
   // Delete worklog
-  app.delete("/api/worklogs", async (context) => {
-    try {
-      const userId = context.user.id;
-      const body = (await context.request.json()) as unknown;
+  app.delete(
+    "/api/worklogs/:id",
+    async (context: RouterContext<{ id: string }>) => {
+      try {
+        const userId = context.user.id;
+        const worklogId = context.params.id;
 
-      const { worklogId } = z
-        .object({
-          worklogId: z.string(),
-        })
-        .parse(body);
+        await worklogService.deleteWork({ worklogId, userId });
 
-      await worklogService.deleteWork({ worklogId, userId });
-
-      return createSuccessResponse({ success: true });
-    } catch (error) {
-      return createErrorResponse(error);
-    }
-  });
+        return createSuccessResponse({ success: true });
+      } catch (error) {
+        return createErrorResponse(error);
+      }
+    },
+  );
 
   // Get worklog
   app.get(

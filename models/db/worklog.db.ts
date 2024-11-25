@@ -14,6 +14,7 @@ const WorklogSchema = new Schema<IWorklogDocument>(
       required: true,
       enum: Object.values(WorkLocation),
     },
+    deleted: { type: Boolean, default: false },
   },
   {
     timestamps: true,

@@ -75,6 +75,7 @@ export class WorklogService {
     const inProgressWork = await Worklog.findOne({
       userId,
       endTime: { $exists: false },
+      deleted: { $ne: true },
     });
 
     if (inProgressWork) {
@@ -86,6 +87,7 @@ export class WorklogService {
       userId,
       startTime: { $lte: parsedStartTime },
       endTime: { $gt: parsedStartTime },
+      deleted: { $ne: true },
     });
 
     if (overlappingWork) {
@@ -115,7 +117,11 @@ export class WorklogService {
     const parsedEndTime = new Date(endTime);
 
     // Find and validate worklog
-    const worklog = await Worklog.findOne({ _id: worklogId, userId });
+    const worklog = await Worklog.findOne({
+      _id: worklogId,
+      userId,
+      deleted: { $ne: true },
+    });
     if (!worklog) {
       throw new Error("Worklog not found");
     }
@@ -158,7 +164,11 @@ export class WorklogService {
   async modifyWork(input: ModifyWorkInput): Promise<IWorklog> {
     const { userId, worklogId, startTime, description, location } = input;
 
-    const worklog = await Worklog.findOne({ _id: worklogId, userId });
+    const worklog = await Worklog.findOne({
+      _id: worklogId,
+      userId,
+      deleted: { $ne: true },
+    });
     if (!worklog) {
       throw new Error("Worklog not found");
     }
@@ -247,7 +257,7 @@ export class WorklogService {
    * Delete an in-progress work session
    */
   async deleteWork(input: DeleteWorkInput): Promise<void> {
-    const { userId, worklogId } = input;
+    const { worklogId, userId } = input;
 
     const worklog = await Worklog.findOne({ _id: worklogId, userId });
     if (!worklog) {
@@ -258,7 +268,9 @@ export class WorklogService {
       throw new Error("Cannot delete completed work");
     }
 
-    await worklog.deleteOne();
+    // Mark as deleted instead of removing
+    worklog.deleted = true;
+    await worklog.save();
   }
 
   /**
@@ -267,7 +279,11 @@ export class WorklogService {
   async getWorklog(input: GetWorklogInput): Promise<IWorklog> {
     const { userId, worklogId } = input;
 
-    const worklog = await Worklog.findOne({ _id: worklogId, userId });
+    const worklog = await Worklog.findOne({
+      _id: worklogId,
+      userId,
+      deleted: { $ne: true },
+    });
     if (!worklog) {
       throw new Error("Worklog not found");
     }
@@ -288,6 +304,7 @@ export class WorklogService {
 
     const query: FilterQuery<IWorklogDocument> = {
       userId,
+      deleted: { $ne: true }, // Filter out deleted worklogs
     };
 
     if (startDate || endDate) {
@@ -347,6 +364,7 @@ export class WorklogService {
       userId,
       startTime: { $lt: endTime },
       endTime: { $gt: startTime },
+      deleted: { $ne: true }, // Don't consider deleted worklogs for overlap
     };
 
     if (excludeWorklogId) {
