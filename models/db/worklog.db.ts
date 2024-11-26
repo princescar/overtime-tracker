@@ -1,4 +1,4 @@
-import { Schema, model, Document } from "mongoose";
+import mongoose, { Document, Model, Schema } from "mongoose";
 import { IWorklog, WorkLocation } from "../worklog";
 
 export interface IWorklogDocument extends Omit<IWorklog, "id">, Document {
@@ -30,4 +30,6 @@ WorklogSchema.index({ userId: 1, startTime: 1, endTime: 1 });
 // Index for common queries
 WorklogSchema.index({ userId: 1, startTime: -1 });
 
-export const Worklog = model<IWorklogDocument>("Worklog", WorklogSchema);
+export const Worklog =
+  (mongoose.models.Worklog as Model<IWorklogDocument>) ||
+  mongoose.model<IWorklogDocument>("Worklog", WorklogSchema);

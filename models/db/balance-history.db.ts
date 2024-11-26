@@ -1,11 +1,11 @@
-import mongoose, { Document } from "mongoose";
+import mongoose, { Document, Model, Schema } from "mongoose";
 import { BalanceChangeType, IBalanceHistory } from "../balance";
 
 export interface IBalanceHistoryDocument
   extends Omit<IBalanceHistory, "id">,
     Document {}
 
-const balanceHistorySchema = new mongoose.Schema<IBalanceHistoryDocument>(
+const balanceHistorySchema = new Schema<IBalanceHistoryDocument>(
   {
     userId: {
       type: String,
@@ -44,7 +44,9 @@ const balanceHistorySchema = new mongoose.Schema<IBalanceHistoryDocument>(
 // Index for querying user's balance history
 balanceHistorySchema.index({ userId: 1, timestamp: -1 });
 
-export const BalanceHistory = mongoose.model<IBalanceHistoryDocument>(
-  "BalanceHistory",
-  balanceHistorySchema,
-);
+export const BalanceHistory =
+  (mongoose.models.BalanceHistory as Model<IBalanceHistoryDocument>) ||
+  mongoose.model<IBalanceHistoryDocument>(
+    "BalanceHistory",
+    balanceHistorySchema,
+  );
