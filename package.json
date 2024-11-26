@@ -1,6 +1,6 @@
 {
-  "name": "worklog",
-  "version": "1.0.0",
+  "name": "overtime-tracker",
+  "version": "0.0.1",
   "type": "module",
   "scripts": {
     "dev": "hattip --client",
@@ -18,9 +18,11 @@
     "@mantine/notifications": "^7.14.2",
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.5",
+    "i18next": "^24.0.2",
     "mongoose": "^8.8.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-i18next": "^15.1.1",
     "vike": "^0.4.204",
     "vike-react": "^0.5.8",
     "zod": "^3.23.8"

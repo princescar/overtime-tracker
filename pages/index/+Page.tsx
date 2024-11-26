@@ -1,5 +1,6 @@
 import { useData } from "vike-react/useData";
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   addMinutes,
   format,
@@ -424,6 +425,8 @@ const StartWorkModal = ({
 };
 
 export function Page() {
+  const { t } = useTranslation();
+
   const {
     worklogs: initialWorklogs,
     inProgressWork: initialInProgressWork,
@@ -619,7 +622,7 @@ export function Page() {
   return (
     <Container size="sm" py="xl">
       <Title order={2} size="h1" fw={900} ta="center">
-        Overwork Monitor
+        {t("overwork_monitor")}
       </Title>
 
       <Stack mt="xl">
