@@ -494,7 +494,7 @@ export function Page() {
     setLoading(true);
     try {
       const worklogs = await request<IWorklog[]>(
-        `/api/worklogs?page=${pageNum}&limit=${itemsPerPage}`,
+        `/api/worklogs?page=${pageNum}&limit=${itemsPerPage}&status=${WorklogStatus.COMPLETED}`,
       );
       if (worklogs.length < itemsPerPage) {
         setHasMore(false);
