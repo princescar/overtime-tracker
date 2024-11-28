@@ -32,10 +32,6 @@ import { notifications } from "@mantine/notifications";
 import { IWorklog, WorkLocation, WorklogStatus } from "#/models";
 import { PageData } from "./+data";
 
-import "@mantine/core/styles.css";
-import "@mantine/dates/styles.css";
-import "@mantine/notifications/styles.css";
-
 interface ApiResponse<T> {
   success: boolean;
   data: T;
