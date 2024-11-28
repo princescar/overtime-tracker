@@ -41,26 +41,50 @@ interface ApiResponse<T> {
 const formatWorkLocation = (location: WorkLocation): string => {
   switch (location) {
     case WorkLocation.HOME:
-      return "Work at home";
+      return "work_at_home";
     case WorkLocation.OFFICE:
-      return "Work in the office";
+      return "work_in_office";
     case WorkLocation.BUSINESS_TRIP:
-      return "Business trip";
+      return "business_trip";
     default:
       return location;
   }
 };
 
-const formatTimeRange = (startTime: Date, endTime: Date | null): string => {
+const TimeRange: React.FC<{ startTime: Date; endTime: Date | null }> = ({
+  startTime,
+  endTime,
+}) => {
+  const { t } = useTranslation();
+
   if (!endTime) {
-    return `Started from ${format(startTime, "MMM d p")}`;
+    return <>{t("started_from", { time: format(startTime, "MMM d p") })}</>;
   }
 
   if (isSameDay(startTime, endTime)) {
-    return `${format(startTime, "MMM d")} ${format(startTime, "p")} - ${format(endTime, "p")}`;
+    return (
+      <>{`${format(startTime, "MMM d")} ${format(startTime, "p")} - ${format(endTime, "p")}`}</>
+    );
   }
 
-  return `${format(startTime, "MMM d")} ${format(startTime, "p")} - ${format(endTime, "MMM d")} ${format(endTime, "p")}`;
+  return (
+    <>{`${format(startTime, "MMM d")} ${format(startTime, "p")} - ${format(endTime, "MMM d")} ${format(endTime, "p")}`}</>
+  );
+};
+
+const WorkLocationDisplay: React.FC<{ location: WorkLocation; day: Date }> = ({
+  location,
+  day,
+}) => {
+  const { t } = useTranslation();
+  return (
+    <>
+      {t("work_location_on_day", {
+        location: t(formatWorkLocation(location)),
+        day: format(day, "EEEE"),
+      })}
+    </>
+  );
 };
 
 const formatBalanceDuration = (minutes: number): string => {
@@ -101,6 +125,7 @@ const MarkWorkCompleteModal = ({
   onClose: () => void;
   onConfirm: (endTime: Date) => void;
 }) => {
+  const { t } = useTranslation();
   const [endTime, setEndTime] = useState<Date | null>(new Date());
 
   useEffect(() => {
@@ -108,10 +133,15 @@ const MarkWorkCompleteModal = ({
   }, [opened]);
 
   return (
-    <Modal opened={opened} onClose={onClose} title="Mark Complete" size="sm">
+    <Modal
+      opened={opened}
+      onClose={onClose}
+      title={t("mark_complete")}
+      size="sm"
+    >
       <Stack>
         <Text size="sm" fw={500}>
-          End Time
+          {t("end_time")}
         </Text>
         <Group grow>
           <Button
@@ -122,7 +152,7 @@ const MarkWorkCompleteModal = ({
             }
             onClick={() => setEndTime(new Date())}
           >
-            Now
+            {t("now")}
           </Button>
           <Button
             variant={
@@ -132,7 +162,7 @@ const MarkWorkCompleteModal = ({
             }
             onClick={() => setEndTime(addMinutes(new Date(), -5))}
           >
-            5m ago
+            {t("minutes_ago", { count: 5 })}
           </Button>
           <Button
             variant={
@@ -142,7 +172,7 @@ const MarkWorkCompleteModal = ({
             }
             onClick={() => setEndTime(addMinutes(new Date(), -15))}
           >
-            15m ago
+            {t("minutes_ago", { count: 15 })}
           </Button>
         </Group>
         <DateTimePicker
@@ -164,13 +194,13 @@ const MarkWorkCompleteModal = ({
                     end: startOfMinute(endTime),
                   }),
                 )
-              : "Invalid end time"}
+              : t("invalid_end_time")}
           </Text>
         </Card>
 
         <Group justify="flex-end" mt="md">
           <Button variant="subtle" onClick={onClose}>
-            Cancel
+            {t("cancel")}
           </Button>
           <Button
             onClick={() => {
@@ -178,7 +208,7 @@ const MarkWorkCompleteModal = ({
               onConfirm(startOfMinute(endTime));
             }}
           >
-            Complete
+            {t("complete")}
           </Button>
         </Group>
       </Stack>
@@ -200,6 +230,7 @@ const LogCompletedWorkModal = ({
     description?: string,
   ) => void;
 }) => {
+  const { t } = useTranslation();
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [endTime, setEndTime] = useState<Date | null>(null);
   const [location, setLocation] = useState<WorkLocation>(WorkLocation.HOME);
@@ -216,12 +247,12 @@ const LogCompletedWorkModal = ({
     <Modal
       opened={opened}
       onClose={onClose}
-      title="Log Completed Work"
+      title={t("log_completed_work")}
       size="sm"
     >
       <Stack>
         <Text size="sm" fw={500}>
-          Start Time
+          {t("start_time")}
         </Text>
         <DateTimePicker
           value={startTime}
@@ -231,7 +262,7 @@ const LogCompletedWorkModal = ({
         />
 
         <Text size="sm" fw={500} mt="md">
-          End Time
+          {t("end_time")}
         </Text>
         <DateTimePicker
           value={endTime}
@@ -242,20 +273,20 @@ const LogCompletedWorkModal = ({
         />
 
         <Text size="sm" fw={500} mt="md">
-          Location
+          {t("location")}
         </Text>
         <Group grow>
           <Button
             variant={location === WorkLocation.HOME ? "filled" : "light"}
             onClick={() => setLocation(WorkLocation.HOME)}
           >
-            Home
+            {t("home")}
           </Button>
           <Button
             variant={location === WorkLocation.OFFICE ? "filled" : "light"}
             onClick={() => setLocation(WorkLocation.OFFICE)}
           >
-            Office
+            {t("office")}
           </Button>
           <Button
             variant={
@@ -263,20 +294,20 @@ const LogCompletedWorkModal = ({
             }
             onClick={() => setLocation(WorkLocation.BUSINESS_TRIP)}
           >
-            Trip
+            {t("trip")}
           </Button>
         </Group>
 
         <TextInput
-          label="Description (optional)"
+          label={t("description")}
           value={description}
           onChange={(event) => setDescription(event.currentTarget.value)}
-          placeholder="What are you working on?"
+          placeholder={t("description_placeholder")}
         />
 
         <Group justify="flex-end" mt="md">
           <Button variant="subtle" onClick={onClose}>
-            Cancel
+            {t("cancel")}
           </Button>
           <Button
             onClick={() => {
@@ -289,7 +320,7 @@ const LogCompletedWorkModal = ({
               );
             }}
           >
-            Log Work
+            {t("log_work")}
           </Button>
         </Group>
       </Stack>
@@ -310,6 +341,7 @@ const StartWorkModal = ({
     description?: string,
   ) => void;
 }) => {
+  const { t } = useTranslation();
   const [startTime, setStartTime] = useState<Date | null>(new Date());
   const [location, setLocation] = useState<WorkLocation>(WorkLocation.HOME);
   const [description, setDescription] = useState<string>("");
@@ -321,10 +353,15 @@ const StartWorkModal = ({
   }, [opened]);
 
   return (
-    <Modal opened={opened} onClose={onClose} title="Start New Work" size="sm">
+    <Modal
+      opened={opened}
+      onClose={onClose}
+      title={t("start_new_work")}
+      size="sm"
+    >
       <Stack>
         <Text size="sm" fw={500}>
-          Start Time
+          {t("start_time")}
         </Text>
         <Group grow>
           <Button
@@ -335,7 +372,7 @@ const StartWorkModal = ({
             }
             onClick={() => setStartTime(new Date())}
           >
-            Now
+            {t("now")}
           </Button>
           <Button
             variant={
@@ -345,7 +382,7 @@ const StartWorkModal = ({
             }
             onClick={() => setStartTime(addMinutes(new Date(), -5))}
           >
-            5m ago
+            {t("minutes_ago", { count: 5 })}
           </Button>
           <Button
             variant={
@@ -355,7 +392,7 @@ const StartWorkModal = ({
             }
             onClick={() => setStartTime(addMinutes(new Date(), -15))}
           >
-            15m ago
+            {t("minutes_ago", { count: 15 })}
           </Button>
         </Group>
         <DateTimePicker
@@ -366,20 +403,20 @@ const StartWorkModal = ({
         />
 
         <Text size="sm" fw={500} mt="md">
-          Location
+          {t("location")}
         </Text>
         <Group grow>
           <Button
             variant={location === WorkLocation.HOME ? "filled" : "light"}
             onClick={() => setLocation(WorkLocation.HOME)}
           >
-            Home
+            {t("home")}
           </Button>
           <Button
             variant={location === WorkLocation.OFFICE ? "filled" : "light"}
             onClick={() => setLocation(WorkLocation.OFFICE)}
           >
-            Office
+            {t("office")}
           </Button>
           <Button
             variant={
@@ -387,20 +424,20 @@ const StartWorkModal = ({
             }
             onClick={() => setLocation(WorkLocation.BUSINESS_TRIP)}
           >
-            Trip
+            {t("trip")}
           </Button>
         </Group>
 
         <TextInput
-          label="Description (optional)"
+          label={t("description")}
           value={description}
           onChange={(event) => setDescription(event.currentTarget.value)}
-          placeholder="What are you working on?"
+          placeholder={t("description_placeholder")}
         />
 
         <Group justify="flex-end" mt="md">
           <Button variant="subtle" onClick={onClose}>
-            Cancel
+            {t("cancel")}
           </Button>
           <Button
             onClick={() => {
@@ -412,7 +449,7 @@ const StartWorkModal = ({
               );
             }}
           >
-            Start Work
+            {t("start_work")}
           </Button>
         </Group>
       </Stack>
@@ -469,17 +506,17 @@ export function Page() {
       if (data.success) {
         return data.data;
       } else {
-        throw new Error(data.error || "Unknown server error");
+        throw new Error(data.error || t("unknown_server_error"));
       }
     } else {
-      throw new Error(`Request failed with status: ${response.status}`);
+      throw new Error(t("request_failed", { status: response.statusText }));
     }
   };
 
   const showError = (error: unknown) => {
     notifications.show({
       color: "red",
-      title: "Error",
+      title: t("error"),
       message: error instanceof Error ? error.message : String(error),
     });
   };
@@ -618,7 +655,7 @@ export function Page() {
   return (
     <Container size="sm" py="xl">
       <Title order={2} size="h1" fw={900} ta="center">
-        {t("overwork_monitor")}
+        {t("overtime_tracker")}
       </Title>
 
       <Stack mt="xl">
@@ -627,10 +664,10 @@ export function Page() {
           <Stack>
             <Group justify="space-between" align="center">
               <Text size="lg" fw={500}>
-                Time Remaining
+                {t("time_remaining")}
               </Text>
               <Anchor size="sm" c="dimmed" href="/history">
-                View History
+                {t("view_history")}
               </Anchor>
             </Group>
             <Text size="xl" fw={700} c={balance >= 9 * 60 ? "green" : "red"}>
@@ -640,14 +677,14 @@ export function Page() {
             {!inProgressWork && (
               <Group mt="md">
                 <Button radius="md" onClick={() => setStartWorkModalOpen(true)}>
-                  Start New Work
+                  {t("start_new_work")}
                 </Button>
                 <Button
                   variant="light"
                   radius="md"
                   onClick={() => setCreateCompletedModalOpen(true)}
                 >
-                  Log Completed Work
+                  {t("log_completed_work")}
                 </Button>
               </Group>
             )}
@@ -660,18 +697,23 @@ export function Page() {
             <Stack h="100%" justify="space-between" gap="xs">
               <Group justify="space-between" align="center">
                 <Text size="lg" fw={500}>
-                  {formatWorkLocation(inProgressWork.location)} on{" "}
-                  {format(inProgressWork.startTime, "EEEE")}
+                  <WorkLocationDisplay
+                    location={inProgressWork.location}
+                    day={inProgressWork.startTime}
+                  />
                 </Text>
                 <Badge color="blue" variant="light" size="sm">
-                  In progress
+                  {t("in_progress")}
                 </Badge>
               </Group>
               <Text size="sm" c="dimmed">
                 {inProgressWork.description}
               </Text>
               <Text size="sm" c="dimmed">
-                {formatTimeRange(inProgressWork.startTime, null)}
+                <TimeRange
+                  startTime={inProgressWork.startTime}
+                  endTime={null}
+                />
               </Text>
               <Group mt="md">
                 <Button
@@ -682,7 +724,7 @@ export function Page() {
                   }}
                   loading={completingWorklog}
                 >
-                  Mark as Complete
+                  {t("mark_as_complete")}
                 </Button>
                 <Button
                   variant="light"
@@ -691,7 +733,7 @@ export function Page() {
                   onClick={() => void cancelWork(inProgressWork.id)}
                   loading={cancellingWorklog}
                 >
-                  Cancel
+                  {t("cancel")}
                 </Button>
               </Group>
             </Stack>
@@ -700,7 +742,7 @@ export function Page() {
 
         {/* Recent Worklogs */}
         <Stack mt="lg">
-          <Title order={3}>Recent Worklogs</Title>
+          <Title order={3}>{t("recent_worklogs")}</Title>
           <Stack>
             {Object.entries(worklogsByWeek)
               .sort(([a], [b]) => new Date(b).getTime() - new Date(a).getTime())
@@ -714,7 +756,7 @@ export function Page() {
                         {formatWeekRange(new Date(weekKey))}
                       </Text>
                       <Text c="dimmed" size="sm">
-                        Total:{" "}
+                        {t("total")}
                         {formatBalanceDuration(
                           calculateTotalDuration(weekLogs),
                         )}
@@ -739,8 +781,10 @@ export function Page() {
                             <Stack gap="xs">
                               <Group justify="space-between" align="center">
                                 <Text size="lg">
-                                  {formatWorkLocation(location)} on{" "}
-                                  {format(startTime, "EEEE")}
+                                  <WorkLocationDisplay
+                                    location={location}
+                                    day={startTime}
+                                  />
                                 </Text>
                                 {endTime && (
                                   <Text c="dimmed">
@@ -757,7 +801,10 @@ export function Page() {
                                 {worklog.description}
                               </Text>
                               <Text size="sm" c="dimmed">
-                                {formatTimeRange(startTime, endTime)}
+                                <TimeRange
+                                  startTime={startTime}
+                                  endTime={endTime}
+                                />
                               </Text>
                             </Stack>
                           </Card>
@@ -787,7 +834,7 @@ export function Page() {
                   cursor: "pointer",
                 }}
               >
-                Load more
+                {t("load_more")}
               </Text>
             </Center>
           )}
