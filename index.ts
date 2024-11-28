@@ -19,12 +19,13 @@ app.use(async (context) => {
   const language = acceptLanguage.toLowerCase().includes("zh") ? "zh" : "en";
 
   const { httpResponse } = await renderPage({
+    userAgent: context.request.headers.get("user-agent") || "unknown",
     urlOriginal: context.url.toString(),
     user: context.user,
     language,
   });
-  const { body, statusCode, headers } = httpResponse;
-  return new Response(body, {
+  const { statusCode, headers } = httpResponse;
+  return new Response(httpResponse.getReadableWebStream(), {
     status: statusCode,
     headers: headers,
   });
