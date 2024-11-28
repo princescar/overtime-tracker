@@ -3,9 +3,6 @@ import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   addMinutes,
-  format,
-  formatDuration,
-  intervalToDuration,
   isSameDay,
   startOfMinute,
   startOfWeek,
@@ -58,52 +55,41 @@ const TimeRange: React.FC<{ startTime: Date; endTime: Date | null }> = ({
   const { t } = useTranslation();
 
   if (!endTime) {
-    return <>{t("started_from", { time: format(startTime, "MMM d p") })}</>;
+    return t("started_from", { startTime });
   }
 
   if (isSameDay(startTime, endTime)) {
-    return (
-      <>{`${format(startTime, "MMM d")} ${format(startTime, "p")} - ${format(endTime, "p")}`}</>
-    );
+    return t("same_day_start_end", { startTime, endTime });
   }
 
-  return (
-    <>{`${format(startTime, "MMM d")} ${format(startTime, "p")} - ${format(endTime, "MMM d")} ${format(endTime, "p")}`}</>
-  );
+  return t("different_day_start_end", { startTime, endTime });
 };
 
-const WorkLocationDisplay: React.FC<{ location: WorkLocation; day: Date }> = ({
+const WorkLocationDisplay: React.FC<{ location: WorkLocation; date: Date }> = ({
   location,
-  day,
+  date,
 }) => {
   const { t } = useTranslation();
-  return (
-    <>
-      {t("work_location_on_day", {
-        location: t(formatWorkLocation(location)),
-        day: format(day, "EEEE"),
-      })}
-    </>
-  );
+  return t("work_location_on_day", {
+    location: t(formatWorkLocation(location)),
+    date,
+  });
 };
 
-const formatBalanceDuration = (minutes: number): string => {
-  const absMinutes = Math.abs(minutes);
-  const hours = Math.floor(absMinutes / 60);
-  const remainingMinutes = absMinutes % 60;
-
-  return formatDuration(
-    { hours, minutes: remainingMinutes },
-    { format: ["hours", "minutes"] },
-  );
+const Duration: React.FC<{ totalMinutes: number }> = ({ totalMinutes }) => {
+  const { t } = useTranslation();
+  if (totalMinutes < 60) {
+    return t("minutes", { minutes: totalMinutes });
+  } else if (totalMinutes % 60 === 0) {
+    return t("hours", { hours: totalMinutes / 60 });
+  } else {
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    return t("hours_and_minutes", { hours, minutes });
+  }
 };
 
-const formatWeekRange = (date: Date): string => {
-  const weekStart = startOfWeek(date, { weekStartsOn: 1 }); // Start week on Monday
-  return `Week of ${format(weekStart, "MMM d")}`;
-};
-
-const calculateTotalDuration = (worklogs: IWorklog[]): number => {
+const calculateTotalMinutes = (worklogs: IWorklog[]): number => {
   return worklogs.reduce((total, worklog) => {
     if (!worklog.endTime) return total;
     const duration = differenceInMinutes(
@@ -187,14 +173,16 @@ const MarkWorkCompleteModal = ({
           <Text ta="center">
             {startTime &&
             endTime &&
-            differenceInMinutes(startTime, endTime) <= 0
-              ? formatDuration(
-                  intervalToDuration({
-                    start: startOfMinute(startTime),
-                    end: startOfMinute(endTime),
-                  }),
-                )
-              : t("invalid_end_time")}
+            differenceInMinutes(endTime, startTime) > 0 ? (
+              <Duration
+                totalMinutes={differenceInMinutes(
+                  startOfMinute(endTime),
+                  startOfMinute(startTime),
+                )}
+              />
+            ) : (
+              t("invalid_end_time")
+            )}
           </Text>
         </Card>
 
@@ -671,8 +659,8 @@ export function Page() {
               </Anchor>
             </Group>
             <Text size="xl" fw={700} c={balance >= 9 * 60 ? "green" : "red"}>
-              {(balance < 0 ? "-" : "") +
-                formatBalanceDuration(Math.abs(balance))}
+              {balance < 0 ? "-" : ""}
+              <Duration totalMinutes={Math.abs(balance)} />
             </Text>
             {!inProgressWork && (
               <Group mt="md">
@@ -699,7 +687,7 @@ export function Page() {
                 <Text size="lg" fw={500}>
                   <WorkLocationDisplay
                     location={inProgressWork.location}
-                    day={inProgressWork.startTime}
+                    date={inProgressWork.startTime}
                   />
                 </Text>
                 <Badge color="blue" variant="light" size="sm">
@@ -753,13 +741,13 @@ export function Page() {
                   <Stack key={weekKey} gap="xs">
                     <Group justify="space-between" align="center">
                       <Text fw={500} c="dimmed" size="sm">
-                        {formatWeekRange(new Date(weekKey))}
+                        {t("week_of", { date: new Date(weekKey) })}
                       </Text>
                       <Text c="dimmed" size="sm">
                         {t("total")}
-                        {formatBalanceDuration(
-                          calculateTotalDuration(weekLogs),
-                        )}
+                        <Duration
+                          totalMinutes={calculateTotalMinutes(weekLogs)}
+                        />
                       </Text>
                     </Group>
                     <Stack gap="md">
@@ -783,17 +771,17 @@ export function Page() {
                                 <Text size="lg">
                                   <WorkLocationDisplay
                                     location={location}
-                                    day={startTime}
+                                    date={startTime}
                                   />
                                 </Text>
                                 {endTime && (
                                   <Text c="dimmed">
-                                    {formatDuration(
-                                      intervalToDuration({
-                                        start: startTime,
-                                        end: endTime,
-                                      }),
-                                    )}
+                                    <Duration
+                                      totalMinutes={differenceInMinutes(
+                                        startOfMinute(endTime),
+                                        startOfMinute(startTime),
+                                      )}
+                                    />
                                   </Text>
                                 )}
                               </Group>

@@ -7,6 +7,9 @@ export const initI18n = async (lng = "en") => {
     resources: { en, zh },
     lng,
     fallbackLng: "en",
+    interpolation: {
+      escapeValue: false,
+    },
   });
 };
 
