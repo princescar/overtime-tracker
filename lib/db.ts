@@ -9,6 +9,7 @@ export async function connectDB() {
   }
 
   try {
+    console.log("Connecting to MongoDB...");
     const uri = getRequiredEnvVar("MONGODB_URI");
     await mongoose.connect(uri);
     isConnected = true;
