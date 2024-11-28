@@ -29,7 +29,7 @@ import {
 } from "@mantine/core";
 import { DateTimePicker } from "@mantine/dates";
 import { notifications } from "@mantine/notifications";
-import { IWorklog, WorkLocation } from "#/models";
+import { IWorklog, WorkLocation, WorklogStatus } from "#/models";
 import { PageData } from "./+data";
 
 import "@mantine/core/styles.css";
