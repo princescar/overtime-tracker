@@ -9,6 +9,11 @@ export default defineConfig({
     react(),
     vike(),
     hattip({
+      clientConfig: {
+        build: {
+          target: "esnext",
+        },
+      },
       serverConfig: {
         build: {
           target: "esnext",
