@@ -1,5 +1,5 @@
 import { useData } from "vike-react/useData";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   addMinutes,
@@ -7,27 +7,11 @@ import {
   startOfMinute,
   startOfWeek,
   differenceInMinutes,
-  isSameMinute,
 } from "date-fns";
-import {
-  Container,
-  Title,
-  Text,
-  Badge,
-  Loader,
-  Center,
-  Button,
-  Modal,
-  Stack,
-  Card,
-  Group,
-  TextInput,
-  Anchor,
-} from "@mantine/core";
-import { DateTimePicker } from "@mantine/dates";
-import { notifications } from "@mantine/notifications";
 import { IWorklog, WorkLocation, WorklogStatus } from "#/models";
+import { Button, DateTimeInput, Modal, ToggleGroup } from "#/components";
 import { PageData } from "./+data";
+import { useToaster } from "#/hooks/useToaster";
 
 interface ApiResponse<T> {
   success: boolean;
@@ -35,20 +19,36 @@ interface ApiResponse<T> {
   error?: string;
 }
 
-const formatWorkLocation = (location: WorkLocation): string => {
-  switch (location) {
-    case WorkLocation.HOME:
-      return "work_at_home";
-    case WorkLocation.OFFICE:
-      return "work_in_office";
-    case WorkLocation.BUSINESS_TRIP:
-      return "business_trip";
-    default:
-      return location;
+const request = async <T,>(
+  url: string,
+  method = "GET",
+  body?: unknown,
+): Promise<T> => {
+  const response = await fetch(url, {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const data = (await response.json()) as ApiResponse<T>;
+  if (!data.success || !response.ok) {
+    throw new Error(
+      data.error || `Request failed with status ${response.status}`,
+    );
   }
+  return data.data;
 };
 
-const TimeRange: React.FC<{ startTime: Date; endTime: Date | null }> = ({
+const calculateTotalMinutes = (worklogs: IWorklog[]): number => {
+  return worklogs.reduce((total, worklog) => {
+    if (!worklog.endTime) return total;
+    const duration = differenceInMinutes(worklog.endTime, worklog.startTime);
+    return total + duration;
+  }, 0);
+};
+
+const TimeRange: React.FC<{ startTime: Date; endTime?: Date | null }> = ({
   startTime,
   endTime,
 }) => {
@@ -65,141 +65,266 @@ const TimeRange: React.FC<{ startTime: Date; endTime: Date | null }> = ({
   return t("different_day_start_end", { startTime, endTime });
 };
 
-const WorkLocationDisplay: React.FC<{ location: WorkLocation; date: Date }> = ({
+const WorkSummary: React.FC<{ location: WorkLocation; date: Date }> = ({
   location,
   date,
 }) => {
   const { t } = useTranslation();
+
+  const keys = {
+    [WorkLocation.HOME]: "work_at_home",
+    [WorkLocation.OFFICE]: "work_in_office",
+    [WorkLocation.BUSINESS_TRIP]: "business_trip",
+  };
+
   return t("work_location_on_day", {
-    location: t(formatWorkLocation(location)),
+    location: t(keys[location]),
     date,
   });
 };
 
 const Duration: React.FC<{ totalMinutes: number }> = ({ totalMinutes }) => {
   const { t } = useTranslation();
+
+  let output = "";
+  if (totalMinutes < 0) {
+    output += "- ";
+  }
+
+  totalMinutes = Math.abs(totalMinutes);
+
   if (totalMinutes < 60) {
-    return t("minutes", { minutes: totalMinutes });
+    output += t("minutes", { minutes: totalMinutes });
   } else if (totalMinutes % 60 === 0) {
-    return t("hours", { hours: totalMinutes / 60 });
+    output += t("hours", { hours: totalMinutes / 60 });
   } else {
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
-    return t("hours_and_minutes", { hours, minutes });
+    output += t("hours_and_minutes", { hours, minutes });
   }
+
+  return output;
 };
 
-const calculateTotalMinutes = (worklogs: IWorklog[]): number => {
-  return worklogs.reduce((total, worklog) => {
-    if (!worklog.endTime) return total;
-    const duration = differenceInMinutes(
-      new Date(worklog.endTime),
-      new Date(worklog.startTime),
-    );
-    return total + duration;
-  }, 0);
+const TimeQuickSelect: React.FC<{
+  value: Date | null;
+  onChange: (date: Date) => void;
+}> = ({ value, onChange }) => {
+  const { t } = useTranslation();
+  const [selectedOption, setSelectedOption] = useState<string>();
+
+  const options = useMemo(
+    () => [
+      { value: "0", label: t("now") },
+      { value: "-5", label: t("minutes_ago", { count: 5 }) },
+      { value: "-15", label: t("minutes_ago", { count: 15 }) },
+    ],
+    [t],
+  );
+
+  const onValueChange = (value: string) => {
+    setSelectedOption(value);
+    const minutes = parseInt(value);
+    const now = new Date();
+    onChange(startOfMinute(addMinutes(now, minutes)));
+  };
+
+  useEffect(() => {
+    if (value) {
+      const now = new Date();
+      const diff = differenceInMinutes(value, now);
+      setSelectedOption(options.find((o) => o.value === String(diff))?.value);
+    }
+  }, [value, options]);
+
+  return (
+    <ToggleGroup
+      value={selectedOption}
+      onValueChange={onValueChange}
+      options={options}
+    />
+  );
 };
 
-const MarkWorkCompleteModal = ({
+const WorkLocationQuickSelect: React.FC<{
+  value: WorkLocation;
+  onChange: (location: WorkLocation) => void;
+}> = ({ value, onChange }) => {
+  const { t } = useTranslation();
+
+  const options = [
+    { value: WorkLocation.HOME, label: t("home") },
+    { value: WorkLocation.OFFICE, label: t("office") },
+    { value: WorkLocation.BUSINESS_TRIP, label: t("business_trip") },
+  ];
+
+  const onValueChange = (value: string) => {
+    onChange(value as WorkLocation);
+  };
+
+  return (
+    <ToggleGroup
+      value={value}
+      onValueChange={onValueChange}
+      options={options}
+    />
+  );
+};
+
+const StartWorkModal = ({
   opened,
-  startTime,
   onClose,
   onConfirm,
 }: {
   opened: boolean;
-  startTime?: Date;
   onClose: () => void;
-  onConfirm: (endTime: Date) => void;
+  onConfirm: () => void;
 }) => {
   const { t } = useTranslation();
+  const [startTime, setStartTime] = useState<Date | null>(new Date());
+  const [location, setLocation] = useState<WorkLocation>(WorkLocation.HOME);
+  const [description, setDescription] = useState<string>("");
+  const [startingWork, setStartingWork] = useState(false);
+
+  useEffect(() => {
+    setStartTime(new Date());
+    setLocation(WorkLocation.HOME);
+    setDescription("");
+  }, [opened]);
+
+  const startWork = async () => {
+    if (!startTime) return;
+    setStartingWork(true);
+    try {
+      await request<IWorklog>("/api/worklogs/start", "POST", {
+        startTime: startOfMinute(startTime),
+        location,
+        description: description || undefined,
+      });
+      onConfirm();
+    } catch (error) {
+      console.error("Error starting work:", error);
+      // showError(error);
+    } finally {
+      setStartingWork(false);
+    }
+  };
+
+  return (
+    <Modal opened={opened} onClose={onClose} title={t("start_new_work")}>
+      <div className="flex flex-col gap-4">
+        <span className="text-sm font-medium">{t("start_time")}</span>
+        <div className="flex grow">
+          <TimeQuickSelect value={startTime} onChange={setStartTime} />
+        </div>
+        <DateTimeInput
+          value={startTime}
+          onChange={setStartTime}
+          max={new Date()}
+        />
+
+        <span className="text-sm font-medium mt-4">{t("location")}</span>
+        <div className="flex grow">
+          <WorkLocationQuickSelect value={location} onChange={setLocation} />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium text-gray-700">
+            {t("description")}
+          </label>
+          <input
+            type="text"
+            className="w-full rounded-md border border-gray-300 p-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            value={description}
+            onChange={(event) => setDescription(event.currentTarget.value)}
+            placeholder={t("description_placeholder")}
+          />
+        </div>
+
+        <div className="flex gap-4 justify-end mt-4">
+          <Button loading={startingWork} onClick={() => void startWork()}>
+            {t("start_work")}
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  );
+};
+
+const MarkWorkCompleteModal = ({
+  opened,
+  worklog,
+  onClose,
+  onConfirm,
+}: {
+  opened: boolean;
+  worklog?: IWorklog;
+  onClose: () => void;
+  onConfirm: () => void;
+}) => {
+  const { t } = useTranslation();
+  const { toast } = useToaster();
   const [endTime, setEndTime] = useState<Date | null>(new Date());
+  const [completingWorklog, setCompletingWorklog] = useState(false);
 
   useEffect(() => {
     setEndTime(new Date());
   }, [opened]);
 
+  const markWorkComplete = async () => {
+    if (!worklog || !endTime) return;
+
+    setCompletingWorklog(true);
+    try {
+      await request<IWorklog>(`/api/worklogs/${worklog.id}/complete`, "POST", {
+        endTime: startOfMinute(endTime),
+      });
+      onConfirm();
+    } catch (error) {
+      console.error("Error completing worklog:", error);
+      toast(error instanceof Error ? error.message : "An error occurred");
+      // showError(error);
+    } finally {
+      setCompletingWorklog(false);
+    }
+  };
+
   return (
-    <Modal
-      opened={opened}
-      onClose={onClose}
-      title={t("mark_complete")}
-      size="sm"
-    >
-      <Stack>
-        <Text size="sm" fw={500}>
-          {t("end_time")}
-        </Text>
-        <Group grow>
-          <Button
-            variant={
-              endTime && isSameMinute(endTime, addMinutes(new Date(), -0))
-                ? "filled"
-                : "light"
-            }
-            onClick={() => setEndTime(new Date())}
-          >
-            {t("now")}
-          </Button>
-          <Button
-            variant={
-              endTime && isSameMinute(endTime, addMinutes(new Date(), -5))
-                ? "filled"
-                : "light"
-            }
-            onClick={() => setEndTime(addMinutes(new Date(), -5))}
-          >
-            {t("minutes_ago", { count: 5 })}
-          </Button>
-          <Button
-            variant={
-              endTime && isSameMinute(endTime, addMinutes(new Date(), -15))
-                ? "filled"
-                : "light"
-            }
-            onClick={() => setEndTime(addMinutes(new Date(), -15))}
-          >
-            {t("minutes_ago", { count: 15 })}
-          </Button>
-        </Group>
-        <DateTimePicker
+    <Modal opened={opened} onClose={onClose} title={t("mark_complete")}>
+      <div className="flex flex-col gap-4">
+        <span className="text-sm font-medium">{t("end_time")}</span>
+        <div className="flex grow">
+          <TimeQuickSelect value={endTime} onChange={setEndTime} />
+        </div>
+        <DateTimeInput
           value={endTime}
-          onChange={(date) => setEndTime(date)}
-          clearable={false}
-          maxDate={new Date()}
-          minDate={startTime ? addMinutes(startTime, 1) : undefined}
+          onChange={setEndTime}
+          max={new Date()}
+          min={
+            worklog?.startTime ? addMinutes(worklog.startTime, 1) : undefined
+          }
         />
 
-        <Card mt="md" p="md" bg="lime.0">
-          <Text ta="center">
-            {startTime &&
-            endTime &&
-            differenceInMinutes(endTime, startTime) > 0 ? (
-              <Duration
-                totalMinutes={differenceInMinutes(
-                  startOfMinute(endTime),
-                  startOfMinute(startTime),
-                )}
-              />
-            ) : (
-              t("invalid_end_time")
-            )}
-          </Text>
-        </Card>
+        {worklog?.startTime && endTime && (
+          <div className="mt-4 p-4 bg-lime-50 text-center">
+            <Duration
+              totalMinutes={differenceInMinutes(
+                startOfMinute(endTime),
+                startOfMinute(worklog.startTime),
+              )}
+            />
+          </div>
+        )}
 
-        <Group justify="flex-end" mt="md">
-          <Button variant="subtle" onClick={onClose}>
-            {t("cancel")}
-          </Button>
+        <div className="flex gap-4 justify-end mt-4">
           <Button
-            onClick={() => {
-              if (!endTime) return;
-              onConfirm(startOfMinute(endTime));
-            }}
+            onClick={() => void markWorkComplete()}
+            loading={completingWorklog}
           >
             {t("complete")}
           </Button>
-        </Group>
-      </Stack>
+        </div>
+      </div>
     </Modal>
   );
 };
@@ -211,18 +336,34 @@ const LogCompletedWorkModal = ({
 }: {
   opened: boolean;
   onClose: () => void;
-  onConfirm: (
-    startTime: Date,
-    endTime: Date,
-    location: WorkLocation,
-    description?: string,
-  ) => void;
+  onConfirm: () => void;
 }) => {
   const { t } = useTranslation();
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [endTime, setEndTime] = useState<Date | null>(null);
   const [location, setLocation] = useState<WorkLocation>(WorkLocation.HOME);
   const [description, setDescription] = useState<string>("");
+  const [loggingWork, setLoggingWork] = useState(false);
+
+  const logWork = async () => {
+    if (!startTime || !endTime) return;
+
+    setLoggingWork(true);
+    try {
+      await request<IWorklog>("/api/worklogs", "POST", {
+        startTime: startOfMinute(startTime),
+        endTime: startOfMinute(endTime),
+        location,
+        description: description || undefined,
+      });
+      onConfirm();
+    } catch (error) {
+      console.error("Error logging completed work:", error);
+      // showError(error);
+    } finally {
+      setLoggingWork(false);
+    }
+  };
 
   useEffect(() => {
     setStartTime(null);
@@ -232,215 +373,58 @@ const LogCompletedWorkModal = ({
   }, [opened]);
 
   return (
-    <Modal
-      opened={opened}
-      onClose={onClose}
-      title={t("log_completed_work")}
-      size="sm"
-    >
-      <Stack>
-        <Text size="sm" fw={500}>
-          {t("start_time")}
-        </Text>
-        <DateTimePicker
+    <Modal opened={opened} onClose={onClose} title={t("log_completed_work")}>
+      <div className="flex flex-col gap-4">
+        <span className="text-sm font-medium">{t("start_time")}</span>
+        <DateTimeInput
           value={startTime}
-          onChange={(date) => setStartTime(date)}
-          clearable={false}
-          maxDate={endTime || new Date()}
+          onChange={setStartTime}
+          max={endTime || new Date()}
         />
 
-        <Text size="sm" fw={500} mt="md">
-          {t("end_time")}
-        </Text>
-        <DateTimePicker
+        <span className="text-sm font-medium mt-4">{t("end_time")}</span>
+        <DateTimeInput
           value={endTime}
-          onChange={(date) => setEndTime(date)}
-          clearable={false}
-          minDate={startTime ? addMinutes(startTime, 1) : undefined}
-          maxDate={new Date()}
+          onChange={setEndTime}
+          min={startTime ? addMinutes(startTime, 1) : undefined}
+          max={new Date()}
         />
 
-        <Text size="sm" fw={500} mt="md">
-          {t("location")}
-        </Text>
-        <Group grow>
-          <Button
-            variant={location === WorkLocation.HOME ? "filled" : "light"}
-            onClick={() => setLocation(WorkLocation.HOME)}
-          >
-            {t("home")}
-          </Button>
-          <Button
-            variant={location === WorkLocation.OFFICE ? "filled" : "light"}
-            onClick={() => setLocation(WorkLocation.OFFICE)}
-          >
-            {t("office")}
-          </Button>
-          <Button
-            variant={
-              location === WorkLocation.BUSINESS_TRIP ? "filled" : "light"
-            }
-            onClick={() => setLocation(WorkLocation.BUSINESS_TRIP)}
-          >
-            {t("trip")}
-          </Button>
-        </Group>
+        <span className="text-sm font-medium mt-4">{t("location")}</span>
+        <div className="flex grow">
+          <WorkLocationQuickSelect value={location} onChange={setLocation} />
+        </div>
 
-        <TextInput
-          label={t("description")}
-          value={description}
-          onChange={(event) => setDescription(event.currentTarget.value)}
-          placeholder={t("description_placeholder")}
-        />
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium text-gray-700">
+            {t("description")}
+          </label>
+          <input
+            type="text"
+            className="w-full rounded-md border border-gray-300 p-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            value={description}
+            onChange={(event) => setDescription(event.currentTarget.value)}
+            placeholder={t("description_placeholder")}
+          />
+        </div>
 
-        <Group justify="flex-end" mt="md">
-          <Button variant="subtle" onClick={onClose}>
-            {t("cancel")}
-          </Button>
-          <Button
-            onClick={() => {
-              if (!startTime || !endTime) return;
-              onConfirm(
-                startOfMinute(startTime),
+        {startTime && endTime && (
+          <div className="mt-4 p-4 bg-lime-50 text-center">
+            <Duration
+              totalMinutes={differenceInMinutes(
                 startOfMinute(endTime),
-                location,
-                description || undefined,
-              );
-            }}
-          >
+                startOfMinute(startTime),
+              )}
+            />
+          </div>
+        )}
+
+        <div className="flex gap-4 justify-end mt-4">
+          <Button onClick={() => void logWork()} loading={loggingWork}>
             {t("log_work")}
           </Button>
-        </Group>
-      </Stack>
-    </Modal>
-  );
-};
-
-const StartWorkModal = ({
-  opened,
-  onClose,
-  onConfirm,
-}: {
-  opened: boolean;
-  onClose: () => void;
-  onConfirm: (
-    startTime: Date,
-    location: WorkLocation,
-    description?: string,
-  ) => void;
-}) => {
-  const { t } = useTranslation();
-  const [startTime, setStartTime] = useState<Date | null>(new Date());
-  const [location, setLocation] = useState<WorkLocation>(WorkLocation.HOME);
-  const [description, setDescription] = useState<string>("");
-
-  useEffect(() => {
-    setStartTime(new Date());
-    setLocation(WorkLocation.HOME);
-    setDescription("");
-  }, [opened]);
-
-  return (
-    <Modal
-      opened={opened}
-      onClose={onClose}
-      title={t("start_new_work")}
-      size="sm"
-    >
-      <Stack>
-        <Text size="sm" fw={500}>
-          {t("start_time")}
-        </Text>
-        <Group grow>
-          <Button
-            variant={
-              startTime && isSameMinute(startTime, addMinutes(new Date(), -0))
-                ? "filled"
-                : "light"
-            }
-            onClick={() => setStartTime(new Date())}
-          >
-            {t("now")}
-          </Button>
-          <Button
-            variant={
-              startTime && isSameMinute(startTime, addMinutes(new Date(), -5))
-                ? "filled"
-                : "light"
-            }
-            onClick={() => setStartTime(addMinutes(new Date(), -5))}
-          >
-            {t("minutes_ago", { count: 5 })}
-          </Button>
-          <Button
-            variant={
-              startTime && isSameMinute(startTime, addMinutes(new Date(), -15))
-                ? "filled"
-                : "light"
-            }
-            onClick={() => setStartTime(addMinutes(new Date(), -15))}
-          >
-            {t("minutes_ago", { count: 15 })}
-          </Button>
-        </Group>
-        <DateTimePicker
-          value={startTime}
-          onChange={(date) => setStartTime(date)}
-          clearable={false}
-          maxDate={new Date()}
-        />
-
-        <Text size="sm" fw={500} mt="md">
-          {t("location")}
-        </Text>
-        <Group grow>
-          <Button
-            variant={location === WorkLocation.HOME ? "filled" : "light"}
-            onClick={() => setLocation(WorkLocation.HOME)}
-          >
-            {t("home")}
-          </Button>
-          <Button
-            variant={location === WorkLocation.OFFICE ? "filled" : "light"}
-            onClick={() => setLocation(WorkLocation.OFFICE)}
-          >
-            {t("office")}
-          </Button>
-          <Button
-            variant={
-              location === WorkLocation.BUSINESS_TRIP ? "filled" : "light"
-            }
-            onClick={() => setLocation(WorkLocation.BUSINESS_TRIP)}
-          >
-            {t("trip")}
-          </Button>
-        </Group>
-
-        <TextInput
-          label={t("description")}
-          value={description}
-          onChange={(event) => setDescription(event.currentTarget.value)}
-          placeholder={t("description_placeholder")}
-        />
-
-        <Group justify="flex-end" mt="md">
-          <Button variant="subtle" onClick={onClose}>
-            {t("cancel")}
-          </Button>
-          <Button
-            onClick={() => {
-              if (!startTime) return;
-              onConfirm(
-                startOfMinute(startTime),
-                location,
-                description || undefined,
-              );
-            }}
-          >
-            {t("start_work")}
-          </Button>
-        </Group>
-      </Stack>
+        </div>
+      </div>
     </Modal>
   );
 };
@@ -454,20 +438,11 @@ export function Page() {
     balance: initialBalance,
     itemsPerPage,
   } = useData<PageData>();
+
   const [balance, setBalance] = useState<number>(initialBalance);
 
   const [inProgressWork, setInProgressWork] = useState<IWorklog | undefined>(
     initialInProgressWork,
-  );
-  const [completingWorklog, setCompletingWorklog] = useState<boolean>(false);
-  const [cancellingWorklog, setCancellingWorklog] = useState(false);
-  const [markWorkCompleteModalOpen, setMarkWorkCompleteModalOpen] =
-    useState(false);
-  const [startWorkModalOpen, setStartWorkModalOpen] = useState(false);
-  const [createCompletedModalOpen, setCreateCompletedModalOpen] =
-    useState(false);
-  const [selectedWorklogId, setSelectedWorklogId] = useState<string | null>(
-    null,
   );
 
   const [worklogs, setWorklogs] = useState<IWorklog[]>(initialWorklogs);
@@ -477,37 +452,13 @@ export function Page() {
     initialWorklogs.length < itemsPerPage ? false : true,
   );
 
-  const request = async <T,>(
-    url: string,
-    method = "GET",
-    body?: unknown,
-  ): Promise<T> => {
-    const response = await fetch(url, {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: body ? JSON.stringify(body) : undefined,
-    });
-    if (response.ok) {
-      const data = (await response.json()) as ApiResponse<T>;
-      if (data.success) {
-        return data.data;
-      } else {
-        throw new Error(data.error || t("unknown_server_error"));
-      }
-    } else {
-      throw new Error(t("request_failed", { status: response.statusText }));
-    }
-  };
+  const [cancelingWorklog, setCancelingWork] = useState(false);
 
-  const showError = (error: unknown) => {
-    notifications.show({
-      color: "red",
-      title: t("error"),
-      message: error instanceof Error ? error.message : String(error),
-    });
-  };
+  const [markWorkCompleteModalOpen, setMarkWorkCompleteModalOpen] =
+    useState(false);
+  const [startWorkModalOpen, setStartWorkModalOpen] = useState(false);
+  const [logCompletedWorkModalOpen, setLogCompletedWorkModalOpen] =
+    useState(false);
 
   const fetchWorklogs = async (pageNum: number) => {
     if (loading) return;
@@ -523,7 +474,7 @@ export function Page() {
       setWorklogs((prev) => [...prev, ...worklogs]);
     } catch (error) {
       console.error("Error fetching worklogs:", error);
-      showError(error);
+      // showError(error);
     } finally {
       setLoading(false);
     }
@@ -537,90 +488,36 @@ export function Page() {
     }
   };
 
-  const completeWork = async (worklogId: string, endTime: Date) => {
-    setCompletingWorklog(true);
-    try {
-      const worklog = await request<IWorklog>(
-        `/api/worklogs/${worklogId}/complete`,
-        "POST",
-        {
-          endTime: endTime.toISOString(),
-        },
-      );
-
-      setWorklogs((prev) =>
-        prev.map((w) => (w.id === worklogId ? worklog : w)),
-      );
-      setInProgressWork(undefined);
-
-      // Refresh data
-      const [refreshedWorklogs, newBalance] = await Promise.all([
-        request<IWorklog[]>(`/api/worklogs?page=1&limit=${itemsPerPage}`),
-        request<number>("/api/balance"),
+  const refreshData = async () => {
+    // Refresh data
+    const [completedWorklogs, [inProgressWork], { balance }] =
+      await Promise.all([
+        request<IWorklog[]>(
+          `/api/worklogs?page=1&limit=${itemsPerPage}&status=${WorklogStatus.COMPLETED}`,
+        ),
+        request<IWorklog[]>(
+          `/api/worklogs?page=1&limit=1&status=${WorklogStatus.IN_PROGRESS}`,
+        ),
+        request<{ balance: number }>("/api/balance"),
       ]);
 
-      setWorklogs(refreshedWorklogs);
-      setBalance(newBalance);
-      setPage(1);
-      setHasMore(refreshedWorklogs.length === itemsPerPage);
-    } catch (error) {
-      console.error("Error completing worklog:", error);
-      showError(error);
-    } finally {
-      setCompletingWorklog(false);
-      setMarkWorkCompleteModalOpen(false);
-      setSelectedWorklogId(null);
-    }
+    setWorklogs(completedWorklogs);
+    setPage(1);
+    setHasMore(completedWorklogs.length === itemsPerPage);
+    setInProgressWork(inProgressWork);
+    setBalance(balance);
   };
 
   const cancelWork = async (worklogId: string) => {
-    setCancellingWorklog(true);
+    setCancelingWork(true);
     try {
       await request(`/api/worklogs/${worklogId}`, "DELETE");
-      setInProgressWork(undefined);
+      void refreshData();
     } catch (error) {
       console.error("Error cancelling worklog:", error);
-      showError(error);
+      // showError(error);
     } finally {
-      setCancellingWorklog(false);
-    }
-  };
-
-  const startWork = async (
-    startTime: Date,
-    location: WorkLocation,
-    description?: string,
-  ) => {
-    try {
-      const worklog = await request<IWorklog>("/api/worklogs/start", "POST", {
-        startTime: startTime.toISOString(),
-        location,
-        description,
-      });
-      setInProgressWork(worklog);
-    } catch (error) {
-      console.error("Error starting work:", error);
-      showError(error);
-    }
-  };
-
-  const logCompletedWork = async (
-    startTime: Date,
-    endTime: Date,
-    location: WorkLocation,
-    description?: string,
-  ) => {
-    try {
-      const worklog = await request<IWorklog>("/api/worklogs", "POST", {
-        startTime: startTime.toISOString(),
-        endTime: endTime.toISOString(),
-        location,
-        description,
-      });
-      setWorklogs((prev) => [worklog, ...prev]);
-    } catch (error) {
-      console.error("Error logging completed work:", error);
-      showError(error);
+      setCancelingWork(false);
     }
   };
 
@@ -641,116 +538,97 @@ export function Page() {
   );
 
   return (
-    <Container size="sm" py="xl">
-      <Title order={2} size="h1" fw={900} ta="center">
+    <div className="container mx-auto px-4 max-w-[680px] py-8">
+      <h1 className="text-3xl font-black text-center">
         {t("overtime_tracker")}
-      </Title>
+      </h1>
 
-      <Stack mt="xl">
+      <div className="mt-8 flex flex-col gap-4">
         {/* Current Balance */}
-        <Card withBorder padding="lg" h="100%" shadow="sm">
-          <Stack>
-            <Group justify="space-between" align="center">
-              <Text size="lg" fw={500}>
-                {t("time_remaining")}
-              </Text>
-              <Anchor size="sm" c="dimmed" href="/history">
-                {t("view_history")}
-              </Anchor>
-            </Group>
-            <Text size="xl" fw={700} c={balance >= 9 * 60 ? "green" : "red"}>
-              {balance < 0 ? "-" : ""}
-              <Duration totalMinutes={Math.abs(balance)} />
-            </Text>
+        <div className="border border-slate-300 rounded-lg p-4 shadow-sm">
+          <div className="flex flex-col gap-4">
+            <div className="text-lg font-medium">{t("time_remaining")}</div>
+            <div
+              className={`text-xl font-bold ${balance >= 9 * 60 ? "text-green-500" : "text-red-500"}`}
+            >
+              <Duration totalMinutes={balance} />
+            </div>
             {!inProgressWork && (
-              <Group mt="md">
-                <Button radius="md" onClick={() => setStartWorkModalOpen(true)}>
+              <div className="mt-4 flex gap-4">
+                <Button onClick={() => setStartWorkModalOpen(true)}>
                   {t("start_new_work")}
                 </Button>
                 <Button
                   variant="light"
-                  radius="md"
-                  onClick={() => setCreateCompletedModalOpen(true)}
+                  onClick={() => setLogCompletedWorkModalOpen(true)}
                 >
                   {t("log_completed_work")}
                 </Button>
-              </Group>
+              </div>
             )}
-          </Stack>
-        </Card>
+          </div>
+        </div>
 
         {/* In Progress Work */}
         {inProgressWork && (
-          <Card bg="lime.0" withBorder padding="lg" h="100%" shadow="sm">
-            <Stack h="100%" justify="space-between" gap="xs">
-              <Group justify="space-between" align="center">
-                <Text size="lg" fw={500}>
-                  <WorkLocationDisplay
+          <div className="bg-lime-50 border border-lime-100 rounded-lg p-4 shadow-sm">
+            <div className="flex flex-col gap-2 justify-between h-full">
+              <div className="flex justify-between items-center">
+                <span className="text-lg font-medium">
+                  <WorkSummary
                     location={inProgressWork.location}
                     date={inProgressWork.startTime}
                   />
-                </Text>
-                <Badge color="blue" variant="light" size="sm">
+                </span>
+                <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-500 uppercase">
                   {t("in_progress")}
-                </Badge>
-              </Group>
-              <Text size="sm" c="dimmed">
+                </span>
+              </div>
+              <span className="text-sm text-gray-500">
                 {inProgressWork.description}
-              </Text>
-              <Text size="sm" c="dimmed">
-                <TimeRange
-                  startTime={inProgressWork.startTime}
-                  endTime={null}
-                />
-              </Text>
-              <Group mt="md">
-                <Button
-                  radius="md"
-                  onClick={() => {
-                    setSelectedWorklogId(inProgressWork.id);
-                    setMarkWorkCompleteModalOpen(true);
-                  }}
-                  loading={completingWorklog}
-                >
+              </span>
+              <span className="text-sm text-gray-500">
+                <TimeRange startTime={inProgressWork.startTime} />
+              </span>
+              <div className="mt-4 flex gap-4">
+                <Button onClick={() => setMarkWorkCompleteModalOpen(true)}>
                   {t("mark_as_complete")}
                 </Button>
                 <Button
-                  variant="light"
-                  color="red"
-                  radius="md"
+                  variant="danger"
                   onClick={() => void cancelWork(inProgressWork.id)}
-                  loading={cancellingWorklog}
+                  disabled={cancelingWorklog}
                 >
                   {t("cancel")}
                 </Button>
-              </Group>
-            </Stack>
-          </Card>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Recent Worklogs */}
-        <Stack mt="lg">
-          <Title order={3}>{t("recent_worklogs")}</Title>
-          <Stack>
+        <div className="mt-8 flex flex-col gap-4">
+          <h2 className="text-2xl font-bold">{t("recent_worklogs")}</h2>
+          <div className="flex flex-col gap-4">
             {Object.entries(worklogsByWeek)
               .sort(([a], [b]) => new Date(b).getTime() - new Date(a).getTime())
               .map(([weekKey, weekLogs]) => {
                 if (weekLogs.length === 0) return null;
 
                 return (
-                  <Stack key={weekKey} gap="xs">
-                    <Group justify="space-between" align="center">
-                      <Text fw={500} c="dimmed" size="sm">
+                  <div key={weekKey} className="flex flex-col gap-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium text-gray-500">
                         {t("week_of", { date: new Date(weekKey) })}
-                      </Text>
-                      <Text c="dimmed" size="sm">
+                      </span>
+                      <span className="text-sm text-gray-500">
                         {t("total")}
                         <Duration
                           totalMinutes={calculateTotalMinutes(weekLogs)}
                         />
-                      </Text>
-                    </Group>
-                    <Stack gap="md">
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-4">
                       {weekLogs.map((worklog) => {
                         const location = worklog.location;
                         const startTime = new Date(worklog.startTime);
@@ -759,102 +637,88 @@ export function Page() {
                           : null;
 
                         return (
-                          <Card
+                          <div
                             key={worklog.id}
-                            withBorder
-                            p="md"
-                            radius="md"
-                            shadow="sm"
+                            className="border border-slate-300 rounded-lg p-4 shadow-sm"
                           >
-                            <Stack gap="xs">
-                              <Group justify="space-between" align="center">
-                                <Text size="lg">
-                                  <WorkLocationDisplay
+                            <div className="flex flex-col gap-2">
+                              <div className="flex justify-between items-center">
+                                <span className="text-lg">
+                                  <WorkSummary
                                     location={location}
                                     date={startTime}
                                   />
-                                </Text>
+                                </span>
                                 {endTime && (
-                                  <Text c="dimmed">
+                                  <span className="text-gray-500">
                                     <Duration
                                       totalMinutes={differenceInMinutes(
                                         startOfMinute(endTime),
                                         startOfMinute(startTime),
                                       )}
                                     />
-                                  </Text>
+                                  </span>
                                 )}
-                              </Group>
-                              <Text size="sm" c="dimmed">
+                              </div>
+                              <span className="text-sm text-gray-500">
                                 {worklog.description}
-                              </Text>
-                              <Text size="sm" c="dimmed">
+                              </span>
+                              <span className="text-sm text-gray-500">
                                 <TimeRange
                                   startTime={startTime}
                                   endTime={endTime}
                                 />
-                              </Text>
-                            </Stack>
-                          </Card>
+                              </span>
+                            </div>
+                          </div>
                         );
                       })}
-                    </Stack>
-                  </Stack>
+                    </div>
+                  </div>
                 );
               })}
-          </Stack>
+          </div>
 
           {loading && (
-            <Center>
-              <Loader size="sm" />
-            </Center>
+            <div className="flex justify-center">
+              <div className="animate-spin rounded-full h-6 w-6 border-2 border-gray-300 border-t-blue-600" />
+            </div>
           )}
 
           {!loading && hasMore && (
-            <Center>
-              <Text
-                component="button"
-                onClick={loadMore}
-                c="blue"
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                }}
-              >
+            <div className="flex justify-center">
+              <span className="text-blue-500 cursor-pointer" onClick={loadMore}>
                 {t("load_more")}
-              </Text>
-            </Center>
+              </span>
+            </div>
           )}
-        </Stack>
-      </Stack>
-      <MarkWorkCompleteModal
-        opened={markWorkCompleteModalOpen}
-        startTime={inProgressWork?.startTime}
-        onClose={() => {
-          setMarkWorkCompleteModalOpen(false);
-          setSelectedWorklogId(null);
-        }}
-        onConfirm={(endTime) => {
-          if (selectedWorklogId) {
-            void completeWork(selectedWorklogId, endTime);
-          }
-        }}
-      />
-      <LogCompletedWorkModal
-        opened={createCompletedModalOpen}
-        onClose={() => setCreateCompletedModalOpen(false)}
-        onConfirm={(startTime, endTime, location, description) =>
-          void logCompletedWork(startTime, endTime, location, description)
-        }
-      />
+        </div>
+      </div>
       <StartWorkModal
         opened={startWorkModalOpen}
         onClose={() => setStartWorkModalOpen(false)}
-        onConfirm={(startTime, location, description) =>
-          void startWork(startTime, location, description)
-        }
+        onConfirm={() => {
+          setStartWorkModalOpen(false);
+          void refreshData();
+        }}
       />
-    </Container>
+      <MarkWorkCompleteModal
+        opened={markWorkCompleteModalOpen}
+        worklog={inProgressWork}
+        onClose={() => setMarkWorkCompleteModalOpen(false)}
+        onConfirm={() => {
+          setMarkWorkCompleteModalOpen(false);
+          void refreshData();
+        }}
+      />
+      <LogCompletedWorkModal
+        opened={logCompletedWorkModalOpen}
+        onClose={() => setLogCompletedWorkModalOpen(false)}
+        onConfirm={() => {
+          setLogCompletedWorkModalOpen(false);
+          void refreshData();
+        }}
+      />
+    </div>
   );
 }
