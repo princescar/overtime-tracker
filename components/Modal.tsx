@@ -8,8 +8,6 @@ import {
   Title,
 } from "@radix-ui/react-dialog";
 
-import "./Modal.css";
-
 const CloseButton = () => {
   return (
     <Close className="absolute top-3.5 right-3.5 p-1 hover:bg-gray-100 rounded-full cursor-pointer">
@@ -40,9 +38,9 @@ interface ModalProps {
 export const Modal = ({ title, opened, onClose, children }: ModalProps) => (
   <Root open={opened} onOpenChange={onClose}>
     <Portal>
-      <Overlay className="modal-overlay fixed inset-0 bg-black/50" />
+      <Overlay className="fixed inset-0 bg-black/50 data-[state=open]:animate-fade-in data-[state=closed]:animate-fade-out" />
       <Content
-        className="modal-content fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] w-full max-w-sm rounded-lg bg-white shadow-xl p-4"
+        className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] w-full max-w-sm rounded-lg bg-white shadow-xl p-4  data-[state=open]:animate-fade-in data-[state=closed]:animate-fade-out"
         aria-describedby={undefined}
       >
         <Title className="text-lg font-medium mb-4">{title}</Title>

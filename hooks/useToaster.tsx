@@ -1,8 +1,6 @@
 import React, { createContext, useContext, useState } from "react";
 import { Description, Provider, Root, Viewport } from "@radix-ui/react-toast";
 
-import "./useToaster.css";
-
 interface ToastMessage {
   id: number;
   message: string;
@@ -33,7 +31,7 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
         {toasts.map((toast) => (
           <Root
             key={toast.id}
-            className="toast bg-white rounded-lg shadow-sm p-4 flex items-center gap-2 fixed top-4 right-4 z-10"
+            className="bg-white rounded-lg shadow-sm p-4 flex items-center gap-2 fixed top-4 right-4 z-10 data-[state=open]:animate-slide-in data-[state=closed]:animate-slide-out"
             duration={4000}
           >
             {toast.type === "success" && (
