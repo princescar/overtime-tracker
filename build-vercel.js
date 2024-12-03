@@ -9,6 +9,7 @@ await bundle({
 await rewriteConfig();
 
 function manipulateEsbuildOptions(options) {
+  options.minify = false;
   options.target = "node22";
   options.format = "esm";
 }
