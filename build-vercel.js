@@ -8,10 +8,20 @@ await bundle({
 
 await rewriteConfig();
 
+await toEsmFile();
+
 function manipulateEsbuildOptions(options) {
   options.minify = false;
   options.target = "node22";
   options.format = "esm";
+}
+
+async function toEsmFile() {
+  console.log("Renaming to .mjs");
+  await fs.promises.rename(
+    "./.vercel/output/functions/_serverless.func/index.js",
+    "./.vercel/output/functions/_serverless.func/index.mjs",
+  );
 }
 
 async function rewriteConfig() {
@@ -21,7 +31,7 @@ async function rewriteConfig() {
     JSON.stringify(
       {
         runtime: "nodejs22.x",
-        handler: "index.js",
+        handler: "index.mjs",
         launcherType: "Nodejs",
         supportsResponseStreaming: true,
       },
