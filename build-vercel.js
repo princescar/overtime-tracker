@@ -8,12 +8,12 @@ await bundle({
 
 await rewriteConfig();
 
-await toEsmFile();
+// await toEsmFile();
 
 function manipulateEsbuildOptions(options) {
   options.minify = false;
   options.target = "node22";
-  options.format = "esm";
+  // options.format = "esm";
 }
 
 async function toEsmFile() {
@@ -31,7 +31,7 @@ async function rewriteConfig() {
     JSON.stringify(
       {
         runtime: "nodejs22.x",
-        handler: "index.mjs",
+        handler: "index.js",
         launcherType: "Nodejs",
         supportsResponseStreaming: true,
       },

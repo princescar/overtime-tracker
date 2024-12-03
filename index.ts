@@ -7,9 +7,12 @@ import initApiHandlers from "#/api";
 
 dotenv.config();
 
-await connectDB();
-
 const app = createRouter();
+
+app.use(async (context) => {
+  await connectDB();
+  return context.next();
+});
 
 initAuthHandlers(app);
 initApiHandlers(app);
