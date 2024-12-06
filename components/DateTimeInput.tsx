@@ -1,6 +1,6 @@
 import React from "react";
-import { format, parseISO } from "date-fns";
 import clsx from "clsx";
+import dayjs from "dayjs";
 
 interface DateTimeInputProps {
   value?: Date | null;
@@ -24,7 +24,7 @@ export function DateTimeInput({
   const formatForInput = (date?: Date | null) => {
     if (!date) return "";
     try {
-      return format(date, "yyyy-MM-dd'T'HH:mm");
+      return dayjs(date).format("YYYY-MM-DDTHH:mm");
     } catch {
       return ""; // Handle invalid date objects gracefully
     }
@@ -37,7 +37,7 @@ export function DateTimeInput({
       return;
     }
     try {
-      onChange(parseISO(dateString));
+      onChange(new Date(dateString));
     } catch {
       // Handle invalid date strings gracefully
       onChange(null);

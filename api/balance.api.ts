@@ -1,6 +1,6 @@
 import { Router } from "@hattip/router";
 import { z } from "zod";
-import { isAfter } from "date-fns";
+import dayjs from "dayjs";
 import { BalanceService } from "#/services";
 import {
   createErrorResponse,
@@ -36,7 +36,7 @@ export default (app: Router) => {
         .parse(queryParams);
 
       // Validate date range
-      if (startDate && endDate && !isAfter(endDate, startDate)) {
+      if (startDate && endDate && !dayjs(endDate).isAfter(startDate)) {
         throw new Error("End date must be after start date");
       }
 

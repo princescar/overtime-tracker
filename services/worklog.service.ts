@@ -1,5 +1,5 @@
 import { FilterQuery, Types } from "mongoose";
-import { isAfter, isSameMinute, startOfMinute } from "date-fns";
+import dayjs from "dayjs";
 import { BalanceService } from "./balance.service";
 import { IWorklog, WorkLocation, WorklogStatus } from "#/models";
 import { IWorklogDocument, Worklog } from "#/models/db";
@@ -65,7 +65,7 @@ export class WorklogService {
     // Validate inputs
     validateDate(startTime, "startTime");
     validateWorkLocation(location);
-    const parsedStartTime = startOfMinute(startTime);
+    const parsedStartTime = dayjs(startTime).startOf("minute").toDate();
 
     // Validate work time constraints
     this.validateWorkTime(parsedStartTime);
@@ -115,7 +115,7 @@ export class WorklogService {
 
     // Validate inputs
     validateDate(endTime, "endTime");
-    const parsedEndTime = startOfMinute(endTime);
+    const parsedEndTime = dayjs(endTime).startOf("minute").toDate();
 
     // Find and validate worklog
     const worklog = await Worklog.findOne({
@@ -185,7 +185,7 @@ export class WorklogService {
 
     if (startTime) {
       validateDate(startTime, "startTime");
-      const parsedStartTime = startOfMinute(startTime);
+      const parsedStartTime = dayjs(startTime).startOf("minute").toDate();
       // Validate new start time
       this.validateWorkTime(parsedStartTime);
       worklog.startTime = parsedStartTime;
@@ -214,8 +214,8 @@ export class WorklogService {
     validateDate(startTime, "startTime");
     validateDate(endTime, "endTime");
     validateWorkLocation(location);
-    const parsedStartTime = startOfMinute(startTime);
-    const parsedEndTime = startOfMinute(endTime);
+    const parsedStartTime = dayjs(startTime).startOf("minute").toDate();
+    const parsedEndTime = dayjs(endTime).startOf("minute").toDate();
 
     // Validate work time constraints
     this.validateWorkTime(parsedStartTime, parsedEndTime);
@@ -313,7 +313,7 @@ export class WorklogService {
       if (
         parsedStartDate &&
         parsedEndDate &&
-        isAfter(parsedStartDate, parsedEndDate)
+        dayjs(parsedStartDate).isAfter(parsedEndDate)
       ) {
         throw new Error("Start date must be before end date");
       }
@@ -346,7 +346,10 @@ export class WorklogService {
   private validateWorkTime(startTime: Date, endTime?: Date) {
     if (endTime) {
       // Validate end time is after start time
-      if (isAfter(startTime, endTime) || isSameMinute(startTime, endTime)) {
+      if (
+        dayjs(startTime).isAfter(endTime) ||
+        dayjs(startTime).isSame(endTime, "minute")
+      ) {
         throw new Error("End time must be after start time");
       }
     }

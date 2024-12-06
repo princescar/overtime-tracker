@@ -1,13 +1,7 @@
 import { useData } from "vike-react/useData";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  addMinutes,
-  isSameDay,
-  startOfMinute,
-  startOfWeek,
-  differenceInMinutes,
-} from "date-fns";
+import dayjs from "dayjs";
 import { IWorklog, WorkLocation, WorklogStatus } from "#/models";
 import { Button, DateTimeInput, Modal, ToggleGroup } from "#/components";
 import { PageData } from "./+data";
@@ -43,7 +37,7 @@ const request = async <T,>(
 const calculateTotalMinutes = (worklogs: IWorklog[]): number => {
   return worklogs.reduce((total, worklog) => {
     if (!worklog.endTime) return total;
-    const duration = differenceInMinutes(worklog.endTime, worklog.startTime);
+    const duration = dayjs(worklog.endTime).diff(worklog.startTime, "minutes");
     return total + duration;
   }, 0);
 };
@@ -58,7 +52,7 @@ const TimeRange: React.FC<{ startTime: Date; endTime?: Date | null }> = ({
     return t("started_from", { startTime });
   }
 
-  if (isSameDay(startTime, endTime)) {
+  if (dayjs(startTime).isSame(endTime, "day")) {
     return t("same_day_start_end", { startTime, endTime });
   }
 
@@ -125,14 +119,14 @@ const TimeQuickSelect: React.FC<{
   const onValueChange = (value: string) => {
     setSelectedOption(value);
     const minutes = parseInt(value);
-    const now = new Date();
-    onChange(startOfMinute(addMinutes(now, minutes)));
+    const date = dayjs().add(minutes, "minutes").startOf("minute").toDate();
+    onChange(date);
   };
 
   useEffect(() => {
     if (value) {
       const now = new Date();
-      const diff = differenceInMinutes(value, now);
+      const diff = dayjs(value).diff(now, "minutes");
       setSelectedOption(options.find((o) => o.value === String(diff))?.value);
     }
   }, [value, options]);
@@ -197,7 +191,7 @@ const StartWorkModal = ({
     setStartingWork(true);
     try {
       await request<IWorklog>("/api/worklogs/start", "POST", {
-        startTime: startOfMinute(startTime),
+        startTime: dayjs(startTime).startOf("minute").toDate(),
         location,
         description: description || undefined,
       });
@@ -277,7 +271,7 @@ const MarkWorkCompleteModal = ({
     setCompletingWorklog(true);
     try {
       await request<IWorklog>(`/api/worklogs/${worklog.id}/complete`, "POST", {
-        endTime: startOfMinute(endTime),
+        endTime: dayjs(endTime).startOf("minute").toDate(),
       });
       onConfirm();
     } catch (error) {
@@ -301,17 +295,18 @@ const MarkWorkCompleteModal = ({
           onChange={setEndTime}
           max={new Date()}
           min={
-            worklog?.startTime ? addMinutes(worklog.startTime, 1) : undefined
+            worklog?.startTime
+              ? dayjs(worklog.startTime).add(1, "minute").toDate()
+              : undefined
           }
         />
 
         {worklog?.startTime && endTime && (
           <div className="mt-4 p-4 bg-lime-50 text-center">
             <Duration
-              totalMinutes={differenceInMinutes(
-                startOfMinute(endTime),
-                startOfMinute(worklog.startTime),
-              )}
+              totalMinutes={dayjs(endTime)
+                .startOf("minute")
+                .diff(dayjs(worklog.startTime).startOf("minute"), "minutes")}
             />
           </div>
         )}
@@ -351,8 +346,8 @@ const LogCompletedWorkModal = ({
     setLoggingWork(true);
     try {
       await request<IWorklog>("/api/worklogs", "POST", {
-        startTime: startOfMinute(startTime),
-        endTime: startOfMinute(endTime),
+        startTime: dayjs(startTime).startOf("minute").toDate(),
+        endTime: dayjs(endTime).startOf("minute").toDate(),
         location,
         description: description || undefined,
       });
@@ -386,7 +381,9 @@ const LogCompletedWorkModal = ({
         <DateTimeInput
           value={endTime}
           onChange={setEndTime}
-          min={startTime ? addMinutes(startTime, 1) : undefined}
+          min={
+            startTime ? dayjs(startTime).add(1, "minute").toDate() : undefined
+          }
           max={new Date()}
         />
 
@@ -411,10 +408,9 @@ const LogCompletedWorkModal = ({
         {startTime && endTime && (
           <div className="mt-4 p-4 bg-lime-50 text-center">
             <Duration
-              totalMinutes={differenceInMinutes(
-                startOfMinute(endTime),
-                startOfMinute(startTime),
-              )}
+              totalMinutes={dayjs(endTime)
+                .startOf("minute")
+                .diff(dayjs(startTime).startOf("minute"), "minutes")}
             />
           </div>
         )}
@@ -525,7 +521,7 @@ export function Page() {
   const worklogsByWeek = worklogs.reduce(
     (acc, worklog) => {
       const startTime = new Date(worklog.startTime);
-      const weekStart = startOfWeek(startTime, { weekStartsOn: 1 });
+      const weekStart = dayjs(startTime).startOf("week");
       const weekKey = weekStart.toISOString();
 
       if (!acc[weekKey]) {
@@ -652,10 +648,12 @@ export function Page() {
                                 {endTime && (
                                   <span className="text-gray-500">
                                     <Duration
-                                      totalMinutes={differenceInMinutes(
-                                        startOfMinute(endTime),
-                                        startOfMinute(startTime),
-                                      )}
+                                      totalMinutes={dayjs(endTime)
+                                        .startOf("minute")
+                                        .diff(
+                                          dayjs(startTime).startOf("minute"),
+                                          "minutes",
+                                        )}
                                     />
                                   </span>
                                 )}
