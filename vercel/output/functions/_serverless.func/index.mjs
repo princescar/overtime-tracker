@@ -1,1 +1,1 @@
-export * from "../../../../dist/server/entry-node.mjs";
+export * from "../../../dist/server/entry-node.mjs";
