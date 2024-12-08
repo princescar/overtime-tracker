@@ -1,9 +1,9 @@
 import dotenv from "dotenv";
 import { createRouter } from "@hattip/router";
 import { renderPage } from "vike/server";
-import { connectDB } from "#/lib/db";
+import { connectDB } from "#/utils";
 import initAuthHandlers from "#/middlewares/auth";
-import initApiHandlers from "#/api";
+import initApiHandlers from "#/controllers";
 
 dotenv.config();
 

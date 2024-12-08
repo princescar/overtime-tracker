@@ -1,5 +1,5 @@
 import mongoose, { Document, Model, Schema } from "mongoose";
-import { BalanceChangeType, IBalanceHistory } from "../balance";
+import { BalanceChangeType, IBalanceHistory } from "#/types";
 
 export interface IBalanceHistoryDocument
   extends Omit<IBalanceHistory, "id">,

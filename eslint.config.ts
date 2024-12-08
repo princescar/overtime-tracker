@@ -10,7 +10,7 @@ import globals from "globals";
 export default [
   includeIgnoreFile(resolve(__dirname, ".gitignore")),
   {
-    files: ["**/*.{ts,tsx}"],
+    files: ["src/**/*.{ts,tsx}"],
     languageOptions: {
       parser: tsParser,
       parserOptions: {

@@ -1,11 +1,8 @@
 import { Router, RouterContext } from "@hattip/router";
 import { z } from "zod";
 import { WorklogService } from "#/services";
-import { WorkLocation, WorklogStatus } from "#/models";
-import {
-  createErrorResponse,
-  createSuccessResponse,
-} from "#/lib/responseFormatter";
+import { WorkLocation, WorklogStatus } from "#/types";
+import { createErrorResponse, createSuccessResponse } from "#/utils";
 
 export default (app: Router) => {
   const worklogService = new WorklogService();

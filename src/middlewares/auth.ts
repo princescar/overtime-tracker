@@ -1,5 +1,5 @@
 import { Router } from "@hattip/router";
-import { getRequiredEnvVar } from "#/lib/env";
+import { getRequiredEnvVar } from "#/utils";
 
 declare module "@hattip/compose" {
   interface RequestContextExtensions {

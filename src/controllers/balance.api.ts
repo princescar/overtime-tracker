@@ -2,10 +2,7 @@ import { Router } from "@hattip/router";
 import { z } from "zod";
 import dayjs from "dayjs";
 import { BalanceService } from "#/services";
-import {
-  createErrorResponse,
-  createSuccessResponse,
-} from "#/lib/responseFormatter";
+import { createErrorResponse, createSuccessResponse } from "#/utils";
 
 export default (app: Router) => {
   const balanceService = new BalanceService();
