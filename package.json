@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "hattip --client",
-    "build": "NODE_ENV=production hattip build --client && cp -r vercel/* .vercel/ && cp -r dist .vercel/",
+    "build": "NODE_ENV=production hattip build --client && cp -r dist vercel/output/functions/_serverless.func/ && cp -r vercel/* .vercel/",
     "lint": "tsc --noEmit && eslint --flag unstable_ts_config"
   },
   "dependencies": {
