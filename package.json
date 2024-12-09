@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "hattip --client",
     "build": "NODE_ENV=production hattip build --client",
+    "bundle:vercel": "node scripts/bundle-vercel.js",
     "lint": "tsc --noEmit && eslint --flag unstable_ts_config"
   },
   "dependencies": {
