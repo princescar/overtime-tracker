@@ -1,14 +1,18 @@
 import React from "react";
-import { I18nextProvider } from "react-i18next";
+import { usePageContext } from "vike-react/usePageContext";
+import { TranslationProvider } from "#/hooks/useTranslation";
 import { ToastProvider } from "#/hooks/useToaster";
-import i18n from "#/i18n";
+import en from "#/locales/en.yaml";
+import zh from "#/locales/zh.yaml";
 
 import "./index.css";
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  const { language } = usePageContext();
+
   return (
-    <I18nextProvider i18n={i18n}>
+    <TranslationProvider locale={language} messages={{ en, zh }}>
       <ToastProvider>{children}</ToastProvider>
-    </I18nextProvider>
+    </TranslationProvider>
   );
 }
