@@ -1,9 +1,9 @@
 import { useData } from "vike-react/useData";
 import React, { useEffect, useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
 import { IWorklog, WorkLocation, WorklogStatus } from "#/types";
 import { Button, DateTimeInput, Modal, ToggleGroup } from "#/components";
+import { useTranslation } from "#/hooks/useTranslation";
 import { useToaster } from "#/hooks/useToaster";
 import { PageData } from "./+data";
 
