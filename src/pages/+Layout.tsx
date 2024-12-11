@@ -1,17 +1,16 @@
-import { usePageContext } from "vike-react/usePageContext";
-import { TranslationProvider } from "#/hooks/useTranslation";
+import { Config } from "vike-react/Config";
 import { ToastProvider } from "#/hooks/useToaster";
-import en from "#/locales/en.yaml";
-import zh from "#/locales/zh.yaml";
+import { useTranslation } from "#/hooks/useTranslation";
 
 import "./index.css";
 
-export function Layout({ children }: { children: JSX.Element }) {
-  const { language } = usePageContext();
+export const Layout = ({ children }: { children: JSX.Element }) => {
+  const { t } = useTranslation();
 
   return (
-    <TranslationProvider locale={language} messages={{ en, zh }}>
+    <>
+      <Config title={t("overtime_tracker")} />
       <ToastProvider>{children}</ToastProvider>
-    </TranslationProvider>
+    </>
   );
-}
+};
