@@ -1,4 +1,4 @@
-import { WorkLocation } from "#/types";
+import { WorkLocation } from "#/types/worklog";
 
 /**
  * Validate work location

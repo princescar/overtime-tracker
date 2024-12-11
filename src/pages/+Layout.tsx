@@ -1,5 +1,6 @@
 import { Config } from "vike-react/Config";
-import { ToastProvider, useTranslation } from "#/hooks";
+import { ToastProvider } from "#/hooks/useToaster";
+import { useTranslation } from "#/hooks/useTranslation";
 
 import "./index.css";
 

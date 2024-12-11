@@ -2,7 +2,8 @@ import dotenv from "dotenv";
 import { createRouter } from "@hattip/router";
 import { cookieParser } from "@hattip/cookie/parse";
 import { renderPage } from "vike/server";
-import { connectDB, detectLanguage } from "#/utils";
+import { connectDB } from "#/utils/db";
+import { detectLanguage } from "#/utils/i18n";
 import initAuthHandlers from "#/middlewares/auth";
 import initApiHandlers from "#/controllers";
 

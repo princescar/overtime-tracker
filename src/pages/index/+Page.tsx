@@ -1,9 +1,13 @@
 import { useData } from "vike-react/useData";
 import { useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
-import { IWorklog, WorkLocation, WorklogStatus } from "#/types";
-import { Button, DateTimeInput, Modal, ToggleGroup } from "#/components";
-import { useToaster, useTranslation } from "#/hooks";
+import { IWorklog, WorkLocation, WorklogStatus } from "#/types/worklog";
+import { Button } from "#/components/Button";
+import { DateTimeInput } from "#/components/DateTimeInput";
+import { Modal } from "#/components/Modal";
+import { ToggleGroup } from "#/components/ToggleGroup";
+import { useToaster } from "#/hooks/useToaster";
+import { useTranslation } from "#/hooks/useTranslation";
 import { PageData } from "./+data";
 
 interface ApiResponse<T> {

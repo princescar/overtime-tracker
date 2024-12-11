@@ -1,6 +1,7 @@
 import type { PageContext } from "vike/types";
-import { BalanceService, WorklogService } from "#/services";
-import { IWorklog, WorklogStatus } from "#/types";
+import { BalanceService } from "#/services/balance.service";
+import { WorklogService } from "#/services/worklog.service";
+import { IWorklog, WorklogStatus } from "#/types/worklog";
 
 export interface PageData {
   worklogs: IWorklog[];

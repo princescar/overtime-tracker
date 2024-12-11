@@ -1,5 +1,5 @@
 import mongoose, { Document, Model, Schema } from "mongoose";
-import { IWorklog, WorkLocation } from "#/types";
+import { IWorklog, WorkLocation } from "#/types/worklog";
 
 export interface IWorklogDocument extends Omit<IWorklog, "id">, Document {
   deleted: boolean;
