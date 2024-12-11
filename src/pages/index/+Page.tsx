@@ -8,34 +8,8 @@ import { Modal } from "#/components/Modal";
 import { ToggleGroup } from "#/components/ToggleGroup";
 import { useToaster } from "#/hooks/useToaster";
 import { useTranslation } from "#/hooks/useTranslation";
+import { request } from "#/utils/request";
 import { PageData } from "./+data";
-
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  error?: string;
-}
-
-const request = async <T,>(
-  url: string,
-  method = "GET",
-  body?: unknown,
-): Promise<T> => {
-  const response = await fetch(url, {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  const data = (await response.json()) as ApiResponse<T>;
-  if (!data.success || !response.ok) {
-    throw new Error(
-      data.error || `Request failed with status ${response.status}`,
-    );
-  }
-  return data.data;
-};
 
 const calculateTotalMinutes = (worklogs: IWorklog[]): number => {
   return worklogs.reduce((total, worklog) => {
