@@ -11,7 +11,7 @@ export default defineConfig({
   plugins: [
     messageformat({
       include: path.resolve(__dirname, "./src/locales/**/*.yaml"),
-      locales: ["en"],
+      locales: ["en", "zh"],
     }),
     react(),
     vike(),
