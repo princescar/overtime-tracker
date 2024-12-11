@@ -34,6 +34,9 @@ export default defineConfig({
       plugins: [tailwindcss, autoprefixer],
     },
   },
+  esbuild: {
+    legalComments: "none",
+  },
   resolve: {
     alias: {
       "#": path.resolve(__dirname, "./src"),
