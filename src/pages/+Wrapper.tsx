@@ -1,5 +1,5 @@
 import { usePageContext } from "vike-react/usePageContext";
-import { TranslationProvider } from "#/hooks/useTranslation";
+import { TranslationProvider } from "#/hooks";
 import en from "#/locales/en.yaml";
 import zh from "#/locales/zh.yaml";
 
