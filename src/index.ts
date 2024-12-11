@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 import { createRouter } from "@hattip/router";
-import { cookieParser } from "@hattip/cookie/parse";
+import { cookie } from "@hattip/cookie";
 import { renderPage } from "vike/server";
 import { connectDB } from "#/utils/db";
 import { detectLanguage } from "#/utils/i18n";
@@ -12,7 +12,7 @@ dotenv.config();
 await connectDB();
 
 const app = createRouter();
-app.use(cookieParser());
+app.use(cookie());
 
 initAuthHandlers(app);
 initApiHandlers(app);

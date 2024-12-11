@@ -4,7 +4,7 @@ const supportedLanguages = ["en", "zh"];
 const defaultLanguage = supportedLanguages[0];
 acceptLanguageParser.languages(supportedLanguages);
 
-const isLanguageSupported = (language?: string | null) =>
+export const isLanguageSupported = (language?: string | null) =>
   supportedLanguages.includes(language?.toLowerCase() ?? "");
 
 export const detectLanguage = (

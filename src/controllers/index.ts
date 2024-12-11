@@ -1,10 +1,12 @@
 import { Router } from "@hattip/router";
 import initWorklogHandlers from "./worklog.api";
 import initBalanceHandlers from "./balance.api";
+import initPreferencesHandlers from "./preferences.api";
 
 export default (app: Router) => {
   initWorklogHandlers(app);
   initBalanceHandlers(app);
+  initPreferencesHandlers(app);
 
   app.use("/api/*", () => {
     return Response.json(
