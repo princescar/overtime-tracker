@@ -1,4 +1,3 @@
-import React from "react";
 import { usePageContext } from "vike-react/usePageContext";
 import { TranslationProvider } from "#/hooks/useTranslation";
 import { ToastProvider } from "#/hooks/useToaster";
@@ -7,7 +6,7 @@ import zh from "#/locales/zh.yaml";
 
 import "./index.css";
 
-export function Layout({ children }: { children: React.ReactNode }) {
+export function Layout({ children }: { children: JSX.Element }) {
   const { language } = usePageContext();
 
   return (

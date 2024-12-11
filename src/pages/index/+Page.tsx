@@ -1,5 +1,5 @@
 import { useData } from "vike-react/useData";
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
 import { IWorklog, WorkLocation, WorklogStatus } from "#/types";
 import { Button, DateTimeInput, Modal, ToggleGroup } from "#/components";
@@ -42,9 +42,12 @@ const calculateTotalMinutes = (worklogs: IWorklog[]): number => {
   }, 0);
 };
 
-const TimeRange: React.FC<{ startTime: Date; endTime?: Date | null }> = ({
+const TimeRange = ({
   startTime,
   endTime,
+}: {
+  startTime: Date;
+  endTime?: Date | null;
 }) => {
   const { t } = useTranslation();
 
@@ -59,9 +62,12 @@ const TimeRange: React.FC<{ startTime: Date; endTime?: Date | null }> = ({
   return t("different_day_start_end", { startTime, endTime });
 };
 
-const WorkSummary: React.FC<{ location: WorkLocation; date: Date }> = ({
+const WorkSummary = ({
   location,
   date,
+}: {
+  location: WorkLocation;
+  date: Date;
 }) => {
   const { t } = useTranslation();
 
@@ -77,7 +83,7 @@ const WorkSummary: React.FC<{ location: WorkLocation; date: Date }> = ({
   });
 };
 
-const Duration: React.FC<{ totalMinutes: number }> = ({ totalMinutes }) => {
+const Duration = ({ totalMinutes }: { totalMinutes: number }) => {
   const { t } = useTranslation();
 
   let output = "";
@@ -100,10 +106,13 @@ const Duration: React.FC<{ totalMinutes: number }> = ({ totalMinutes }) => {
   return output;
 };
 
-const TimeQuickSelect: React.FC<{
+const TimeQuickSelect = ({
+  value,
+  onChange,
+}: {
   value: Date | null;
   onChange: (date: Date) => void;
-}> = ({ value, onChange }) => {
+}) => {
   const { t } = useTranslation();
   const [selectedOption, setSelectedOption] = useState<string>();
 
@@ -140,10 +149,13 @@ const TimeQuickSelect: React.FC<{
   );
 };
 
-const WorkLocationQuickSelect: React.FC<{
+const WorkLocationQuickSelect = ({
+  value,
+  onChange,
+}: {
   value: WorkLocation;
   onChange: (location: WorkLocation) => void;
-}> = ({ value, onChange }) => {
+}) => {
   const { t } = useTranslation();
 
   const options = [

@@ -1,4 +1,3 @@
-import React from "react";
 import clsx from "clsx";
 
 const baseButtonStyles =
@@ -35,7 +34,7 @@ const spinner = (
 type ButtonProps = {
   variant?: keyof typeof buttonVariants;
   loading?: boolean;
-} & React.ComponentProps<"button">;
+} & JSX.IntrinsicElements["button"];
 
 export const Button = ({
   variant = "default",

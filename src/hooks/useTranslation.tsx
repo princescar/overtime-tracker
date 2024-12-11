@@ -1,4 +1,4 @@
-import React, { createContext, useContext } from "react";
+import { createContext, useContext } from "react";
 import Messages, { MessageData } from "@messageformat/runtime/messages";
 
 interface TranslationContextValue {
@@ -15,7 +15,7 @@ export const TranslationProvider = ({
 }: {
   locale: string;
   messages: Record<string, MessageData>;
-  children: React.ReactNode;
+  children: JSX.Element;
 }) => {
   const messagesObject = new Messages(messages, locale);
 

@@ -1,4 +1,3 @@
-import React from "react";
 import { Item, Root } from "@radix-ui/react-toggle-group";
 import clsx from "clsx";
 

@@ -1,4 +1,3 @@
-import React from "react";
 import {
   Close,
   Content,
@@ -32,7 +31,7 @@ interface ModalProps {
   title: string;
   opened: boolean;
   onClose: () => void;
-  children: React.ReactNode;
+  children: JSX.Element;
 }
 
 export const Modal = ({ title, opened, onClose, children }: ModalProps) => (

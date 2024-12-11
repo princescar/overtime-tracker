@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState } from "react";
 import { Description, Provider, Root, Viewport } from "@radix-ui/react-toast";
 
 interface ToastMessage {
@@ -13,7 +13,7 @@ interface ToastContextType {
 
 const ToastContext = createContext<ToastContextType | null>(null);
 
-export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
+export const ToastProvider = ({ children }: { children: JSX.Element }) => {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   const addToast = (message: string, type: ToastMessage["type"] = "info") => {
