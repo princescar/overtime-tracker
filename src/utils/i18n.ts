@@ -1,6 +1,15 @@
 import acceptLanguageParser from "accept-language";
+import Messages from "@messageformat/runtime/messages";
+import en from "#/locales/en.yaml";
+import zh from "#/locales/zh.yaml";
 
-const supportedLanguages = ["en", "zh"];
+export interface I18n {
+  readonly language: string;
+  translate: (id: string, props?: Record<string, unknown>) => string;
+}
+
+const messagesData = { en, zh };
+const supportedLanguages = Object.keys(messagesData);
 const defaultLanguage = supportedLanguages[0];
 acceptLanguageParser.languages(supportedLanguages);
 
@@ -22,4 +31,19 @@ export const detectLanguage = (
   }
 
   return language;
+};
+
+export const createI18n = (language: string) => {
+  if (!isLanguageSupported(language)) {
+    throw new Error(`Unsupported language: ${language}`);
+  }
+
+  const messages = new Messages(messagesData, defaultLanguage);
+  messages.locale = language;
+
+  return {
+    language: messages.locale,
+    translate: (id: string, props?: Record<string, unknown>) =>
+      messages.get(id, props) as string,
+  };
 };
