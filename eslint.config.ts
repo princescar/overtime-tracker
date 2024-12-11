@@ -14,8 +14,7 @@ export default [
     languageOptions: {
       parser: tsParser,
       parserOptions: {
-        project: "./tsconfig.json",
-        tsconfigRootDir: ".",
+        projectService: true,
         ecmaVersion: "latest",
         sourceType: "module",
         ecmaFeatures: {
@@ -31,16 +30,13 @@ export default [
     plugins: {
       "@typescript-eslint": tsPlugin,
       react: reactPlugin,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       "react-hooks": reactHooksPlugin,
     },
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     rules: {
+      ...tsPlugin.configs["recommended-type-checked"].rules,
       ...tsPlugin.configs.strict.rules,
-      ...tsPlugin.configs["recommended-requiring-type-checking"].rules,
       ...tsPlugin.configs.stylistic.rules,
       ...reactPlugin.configs.recommended.rules,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       ...reactHooksPlugin.configs.recommended.rules,
       "react/react-in-jsx-scope": "off",
       "react/prop-types": "off",
