@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import { connect, startSession, type ClientSession } from "mongoose";
 import { getRequiredEnvVar } from "./env";
 
 let isConnected = false;
@@ -11,7 +11,7 @@ export async function connectDB() {
   try {
     console.log("Connecting to MongoDB...");
     const uri = getRequiredEnvVar("MONGODB_URI");
-    await mongoose.connect(uri);
+    await connect(uri);
     isConnected = true;
     console.log("MongoDB connected successfully");
   } catch (error) {
@@ -26,9 +26,9 @@ export async function connectDB() {
  * @returns Result of the operation
  */
 export async function withTransaction<T>(
-  operation: (session: mongoose.ClientSession) => Promise<T>,
+  operation: (session: ClientSession) => Promise<T>,
 ): Promise<T> {
-  const session = await mongoose.startSession();
+  const session = await startSession();
   try {
     const result = await session.withTransaction(async () => {
       return await operation(session);

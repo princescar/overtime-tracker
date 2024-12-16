@@ -3,10 +3,13 @@ node_modules
 .pnp
 .pnp.js
 
-# Production
-dist
-dist-ssr
-build
+# Output
+.output
+.vercel
+.netlify
+.wrangler
+/.svelte-kit
+/build
 
 # Local env files
 *.local

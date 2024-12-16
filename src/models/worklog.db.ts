@@ -1,9 +1,11 @@
-import mongoose, { Document, Model, Schema } from "mongoose";
-import { IWorklog, WorkLocation } from "#/types/worklog";
+import mongoose, { type Document, type Model } from "mongoose";
+import { type IWorklog, WorkLocation } from "#/types/worklog";
 
 export interface IWorklogDocument extends Omit<IWorklog, "id">, Document {
   deleted: boolean;
 }
+
+const { model, models, Schema } = mongoose;
 
 const WorklogSchema = new Schema<IWorklogDocument>(
   {
@@ -31,5 +33,5 @@ WorklogSchema.index({ userId: 1, startTime: 1, endTime: 1 });
 WorklogSchema.index({ userId: 1, startTime: -1 });
 
 export const Worklog =
-  (mongoose.models.Worklog as Model<IWorklogDocument>) ||
-  mongoose.model<IWorklogDocument>("Worklog", WorklogSchema);
+  (models.Worklog as Model<IWorklogDocument> | undefined) ??
+  model<IWorklogDocument>("Worklog", WorklogSchema);

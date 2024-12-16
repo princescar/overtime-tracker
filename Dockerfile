@@ -7,6 +7,7 @@ RUN pnpm build
 
 FROM node:20-slim
 WORKDIR /app
-COPY --from=builder /app/dist /app/dist
+COPY --from=builder /app/build /app/build
+RUN echo '{ "type": "module" }' > /app/build/package.json
 EXPOSE 3000
-CMD ["node", "dist/server/index.mjs"]
+CMD ["node", "build"]

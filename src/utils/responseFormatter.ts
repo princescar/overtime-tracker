@@ -1,19 +1,32 @@
 interface ErrorResponse {
-  success: boolean;
-  error: string;
+  success: false;
+  error: {
+    message: string;
+    code?: string;
+  };
 }
 
 interface SuccessResponse<T> {
-  success: boolean;
+  success: true;
   data: T;
 }
+
+export type ApiResponse<T> = SuccessResponse<T> | ErrorResponse;
 
 export function createErrorResponse(error: unknown): Response {
   console.error(error);
 
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  const errorCode =
+    typeof (error as { code: string }).code === "string"
+      ? (error as { code: string }).code
+      : undefined;
   const response: ErrorResponse = {
     success: false,
-    error: error instanceof Error ? error.message : String(error),
+    error: {
+      message: errorMessage,
+      code: errorCode,
+    },
   };
 
   return Response.json(response, {

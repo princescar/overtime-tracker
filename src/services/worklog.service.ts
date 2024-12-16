@@ -1,8 +1,8 @@
-import { FilterQuery, Types } from "mongoose";
 import dayjs from "dayjs";
+import type { FilterQuery, ObjectId } from "mongoose";
 import { BalanceService } from "./balance.service";
-import { IWorklog, WorkLocation, WorklogStatus } from "#/types/worklog";
-import { IWorklogDocument, Worklog } from "#/models/worklog.db";
+import { type IWorklog, WorkLocation, WorklogStatus } from "#/types/worklog";
+import { type IWorklogDocument, Worklog } from "#/models/worklog.db";
 import { validateDate, validateWorkLocation } from "#/utils/validation";
 import { withTransaction } from "#/utils/db";
 import { getRequiredNumericEnvVar } from "#/utils/env";
@@ -51,7 +51,7 @@ interface QueryWorklogsInput {
   startDate?: Date | string;
   endDate?: Date | string;
   status?: WorklogStatus;
-  page?: number;
+  skip?: number;
   limit?: number;
 }
 
@@ -81,7 +81,10 @@ export class WorklogService {
     });
 
     if (inProgressWork) {
-      throw new Error("User already has in-progress work");
+      throw new WorklogError(
+        WorklogErrorCode.WORKLOG_IN_PROGRESS_EXISTS,
+        "User already has in-progress work",
+      );
     }
 
     // Check for overlapping work sessions
@@ -93,7 +96,10 @@ export class WorklogService {
     });
 
     if (overlappingWork) {
-      throw new Error("New work session overlaps with an existing session");
+      throw new WorklogError(
+        WorklogErrorCode.WORKLOG_OVERLAP,
+        "New work session overlaps with an existing session",
+      );
     }
 
     // Create new worklog
@@ -124,23 +130,21 @@ export class WorklogService {
       deleted: { $ne: true },
     });
     if (!worklog) {
-      throw new Error("Worklog not found");
+      throw new WorklogError(WorklogErrorCode.WORKLOG_NOT_FOUND, "Worklog not found");
     }
 
     if (worklog.endTime) {
-      throw new Error("Work is already completed");
+      throw new WorklogError(
+        WorklogErrorCode.WORKLOG_ALREADY_COMPLETED,
+        "Work is already completed",
+      );
     }
 
     // Validate work time constraints
     this.validateWorkTime(worklog.startTime, parsedEndTime);
 
     // Check for overlapping work sessions
-    await this.validateNoOverlap(
-      userId,
-      worklog.startTime,
-      parsedEndTime,
-      worklogId,
-    );
+    await this.validateNoOverlap(userId, worklog.startTime, parsedEndTime, worklogId);
 
     // Calculate cost
     const cost = this.calculateCost(worklog.startTime, parsedEndTime);
@@ -151,12 +155,7 @@ export class WorklogService {
       const savedWorklog = await worklog.save({ session });
 
       // Deduct cost from user's balance atomically with balance check
-      await this.balanceService.deductWorklogCost(
-        userId,
-        cost,
-        worklogId,
-        session,
-      );
+      await this.balanceService.deductWorklogCost(userId, cost, worklogId, session);
 
       return savedWorklog;
     });
@@ -176,11 +175,14 @@ export class WorklogService {
       deleted: { $ne: true },
     });
     if (!worklog) {
-      throw new Error("Worklog not found");
+      throw new WorklogError(WorklogErrorCode.WORKLOG_NOT_FOUND, "Worklog not found");
     }
 
     if (worklog.endTime) {
-      throw new Error("Cannot modify completed work");
+      throw new WorklogError(
+        WorklogErrorCode.WORKLOG_ALREADY_COMPLETED,
+        "Cannot modify completed work",
+      );
     }
 
     if (startTime) {
@@ -205,9 +207,7 @@ export class WorklogService {
   /**
    * Create a completed work entry directly
    */
-  async createCompletedWork(
-    input: CreateCompletedWorkInput,
-  ): Promise<IWorklog> {
+  async createCompletedWork(input: CreateCompletedWorkInput): Promise<IWorklog> {
     const { userId, startTime, endTime, description, location } = input;
 
     // Validate inputs
@@ -243,12 +243,7 @@ export class WorklogService {
       );
 
       // Deduct cost from user's balance atomically with balance check
-      await this.balanceService.deductWorklogCost(
-        userId,
-        cost,
-        worklog.id as string,
-        session,
-      );
+      await this.balanceService.deductWorklogCost(userId, cost, worklog.id as string, session);
 
       return worklog;
     });
@@ -264,11 +259,14 @@ export class WorklogService {
 
     const worklog = await Worklog.findOne({ _id: worklogId, userId });
     if (!worklog) {
-      throw new Error("Worklog not found");
+      throw new WorklogError(WorklogErrorCode.WORKLOG_NOT_FOUND, "Worklog not found");
     }
 
     if (worklog.endTime) {
-      throw new Error("Cannot delete completed work");
+      throw new WorklogError(
+        WorklogErrorCode.WORKLOG_ALREADY_COMPLETED,
+        "Cannot delete completed work",
+      );
     }
 
     // Mark as deleted instead of removing
@@ -288,7 +286,7 @@ export class WorklogService {
       deleted: { $ne: true },
     });
     if (!worklog) {
-      throw new Error("Worklog not found");
+      throw new WorklogError(WorklogErrorCode.WORKLOG_NOT_FOUND, "Worklog not found");
     }
     return this.toWorklog(worklog);
   }
@@ -297,7 +295,7 @@ export class WorklogService {
    * Get user's worklogs with optional filters
    */
   async queryWorklogs(input: QueryWorklogsInput): Promise<IWorklog[]> {
-    const { userId, startDate, endDate, status, page = 1, limit = 10 } = input;
+    const { userId, startDate, endDate, status, skip = 0, limit = 10 } = input;
 
     const query: FilterQuery<IWorklogDocument> = {
       userId,
@@ -310,18 +308,14 @@ export class WorklogService {
       const parsedStartDate = startDate ? new Date(startDate) : undefined;
       const parsedEndDate = endDate ? new Date(endDate) : undefined;
 
-      if (
-        parsedStartDate &&
-        parsedEndDate &&
-        dayjs(parsedStartDate).isAfter(parsedEndDate)
-      ) {
-        throw new Error("Start date must be before end date");
+      if (parsedStartDate && parsedEndDate && dayjs(parsedStartDate).isAfter(parsedEndDate)) {
+        throw new WorklogError(
+          WorklogErrorCode.WORKLOG_INVALID_TIME,
+          "Start date must be before end date",
+        );
       }
 
-      query.$or = [
-        { startTime: { $lte: parsedEndDate } },
-        { endTime: { $gte: parsedStartDate } },
-      ];
+      query.$or = [{ startTime: { $lte: parsedEndDate } }, { endTime: { $gte: parsedStartDate } }];
     }
 
     if (status === WorklogStatus.IN_PROGRESS) {
@@ -330,12 +324,44 @@ export class WorklogService {
       query.$and = [{ endTime: { $exists: true } }, { endTime: { $ne: null } }];
     }
 
-    const skip = (page - 1) * limit;
-    const worklogs = await Worklog.find(query)
-      .sort({ startTime: -1 })
-      .skip(skip)
-      .limit(limit);
+    const worklogs = await Worklog.find(query).sort({ startTime: -1 }).skip(skip).limit(limit);
     return worklogs.map((doc) => this.toWorklog(doc));
+  }
+
+  /**
+   * Get worklog count with optional filters
+   */
+  async countWorklogs(input: Omit<QueryWorklogsInput, "skip" | "limit">): Promise<number> {
+    const { userId, startDate, endDate, status } = input;
+
+    const query: FilterQuery<IWorklogDocument> = {
+      userId,
+      deleted: { $ne: true }, // Filter out deleted worklogs
+    };
+
+    if (startDate || endDate) {
+      if (startDate) validateDate(startDate, "startDate");
+      if (endDate) validateDate(endDate, "endDate");
+      const parsedStartDate = startDate ? new Date(startDate) : undefined;
+      const parsedEndDate = endDate ? new Date(endDate) : undefined;
+
+      if (parsedStartDate && parsedEndDate && dayjs(parsedStartDate).isAfter(parsedEndDate)) {
+        throw new WorklogError(
+          WorklogErrorCode.WORKLOG_INVALID_TIME,
+          "Start date must be before end date",
+        );
+      }
+
+      query.$or = [{ startTime: { $lte: parsedEndDate } }, { endTime: { $gte: parsedStartDate } }];
+    }
+
+    if (status === WorklogStatus.IN_PROGRESS) {
+      query.$or = [{ endTime: { $exists: false } }, { endTime: null }];
+    } else if (status === WorklogStatus.COMPLETED) {
+      query.$and = [{ endTime: { $exists: true } }, { endTime: { $ne: null } }];
+    }
+
+    return Worklog.countDocuments(query);
   }
 
   private balanceService = new BalanceService();
@@ -346,11 +372,11 @@ export class WorklogService {
   private validateWorkTime(startTime: Date, endTime?: Date) {
     if (endTime) {
       // Validate end time is after start time
-      if (
-        dayjs(startTime).isAfter(endTime) ||
-        dayjs(startTime).isSame(endTime, "minute")
-      ) {
-        throw new Error("End time must be after start time");
+      if (dayjs(startTime).isAfter(endTime) || dayjs(startTime).isSame(endTime, "minute")) {
+        throw new WorklogError(
+          WorklogErrorCode.WORKLOG_INVALID_TIME,
+          "End time must be after start time",
+        );
       }
     }
   }
@@ -385,7 +411,10 @@ export class WorklogService {
 
     const overlappingWork = await Worklog.findOne(query);
     if (overlappingWork) {
-      throw new Error("Work session would overlap with another session");
+      throw new WorklogError(
+        WorklogErrorCode.WORKLOG_OVERLAP,
+        "Work session would overlap with another session",
+      );
     }
   }
 
@@ -404,12 +433,30 @@ export class WorklogService {
    */
   private toWorklog(doc: IWorklogDocument): IWorklog {
     return {
-      id: (doc._id as Types.ObjectId).toString(),
+      id: (doc._id as ObjectId).toString(),
       userId: doc.userId,
       startTime: doc.startTime,
       endTime: doc.endTime,
       description: doc.description,
       location: doc.location,
     };
+  }
+}
+
+enum WorklogErrorCode {
+  "WORKLOG_NOT_FOUND" = "WORKLOG_NOT_FOUND",
+  "WORKLOG_IN_PROGRESS_EXISTS" = "WORKLOG_IN_PROGRESS_EXISTS",
+  "WORKLOG_ALREADY_COMPLETED" = "WORKLOG_ALREADY_COMPLETED",
+  "WORKLOG_OVERLAP" = "WORKLOG_OVERLAP",
+  "WORKLOG_INVALID_TIME" = "WORKLOG_INVALID_TIME",
+}
+
+class WorklogError extends Error {
+  code: WorklogErrorCode;
+
+  constructor(code: WorklogErrorCode, message: string) {
+    super(message);
+    this.name = "WorklogError";
+    this.code = code;
   }
 }

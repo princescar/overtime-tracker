@@ -1,45 +1,30 @@
-import path from "path";
+import { fileURLToPath } from "url";
+import { readdirSync } from "fs";
 import { defineConfig } from "vite";
+import { sveltekit } from "@sveltejs/kit/vite";
 import { messageformat } from "rollup-plugin-messageformat";
-import react from "@vitejs/plugin-react";
-import vike from "vike/plugin";
-import { hattip } from "@hattip/vite";
 import tailwindcss from "tailwindcss";
 import autoprefixer from "autoprefixer";
+
+const messagesFolder = new URL("./src/messages/", import.meta.url);
+const supportedLanguages = readdirSync(messagesFolder)
+  .filter((file) => file.endsWith(".yaml"))
+  .map((file) => file.replace(/\.yaml$/, ""));
 
 export default defineConfig({
   plugins: [
     messageformat({
-      include: path.resolve(__dirname, "./src/locales/**/*.yaml"),
-      locales: ["en", "zh"],
+      include: fileURLToPath(new URL("*.yaml", messagesFolder)),
+      locales: supportedLanguages,
     }),
-    react(),
-    vike(),
-    hattip({
-      serverConfig: {
-        build: {
-          target: "esnext",
-        },
-        ssr: {
-          noExternal: true,
-        },
-      },
-    }),
+    sveltekit(),
   ],
-  build: {
-    cssTarget: ["es2020", "edge88", "firefox78", "chrome87", "safari14"],
+  server: {
+    port: 3000,
   },
   css: {
     postcss: {
       plugins: [tailwindcss, autoprefixer],
-    },
-  },
-  esbuild: {
-    legalComments: "none",
-  },
-  resolve: {
-    alias: {
-      "#": path.resolve(__dirname, "./src"),
     },
   },
 });

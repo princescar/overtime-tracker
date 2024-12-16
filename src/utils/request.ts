@@ -1,26 +1,46 @@
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  error?: string;
-}
+import type { ApiResponse } from "./responseFormatter";
 
 export const request = async <T>(
   url: string,
   method = "GET",
-  body?: unknown,
+  requestBody?: unknown,
 ): Promise<T> => {
-  const response = await fetch(url, {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  const data = (await response.json()) as ApiResponse<T>;
-  if (!data.success || !response.ok) {
-    throw new Error(
-      data.error || `Request failed with status ${response.status}`,
-    );
+  let responseBody: ApiResponse<T>;
+  try {
+    const response = await fetch(url, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: requestBody ? JSON.stringify(requestBody) : undefined,
+    });
+
+    responseBody = (await response.json()) as ApiResponse<T>;
+  } catch (error) {
+    console.log(error);
+    throw new RequestError("Request failed");
   }
-  return data.data;
+
+  if (!responseBody.success) {
+    throw new ServerError(responseBody.error.code ?? "UNKNOWN", responseBody.error.message);
+  }
+
+  return responseBody.data;
 };
+
+class RequestError extends Error {
+  code = "REQUEST_ERROR";
+  constructor(message: string) {
+    super(message);
+    this.name = "RequestError";
+  }
+}
+
+class ServerError extends Error {
+  code: string;
+  constructor(code: string, message: string) {
+    super(message);
+    this.name = "ServerError";
+    this.code = code;
+  }
+}

@@ -1,9 +1,9 @@
-import mongoose, { Document, Model, Schema } from "mongoose";
-import { BalanceChangeType, IBalanceHistory } from "#/types/balance";
+import mongoose, { type Document, type Model } from "mongoose";
+import { BalanceChangeType, type IBalanceHistory } from "#/types/balance";
 
-export interface IBalanceHistoryDocument
-  extends Omit<IBalanceHistory, "id">,
-    Document {}
+export interface IBalanceHistoryDocument extends Omit<IBalanceHistory, "id">, Document {}
+
+const { model, models, Schema } = mongoose;
 
 const balanceHistorySchema = new Schema<IBalanceHistoryDocument>(
   {
@@ -45,8 +45,5 @@ const balanceHistorySchema = new Schema<IBalanceHistoryDocument>(
 balanceHistorySchema.index({ userId: 1, timestamp: -1 });
 
 export const BalanceHistory =
-  (mongoose.models.BalanceHistory as Model<IBalanceHistoryDocument>) ||
-  mongoose.model<IBalanceHistoryDocument>(
-    "BalanceHistory",
-    balanceHistorySchema,
-  );
+  (models.BalanceHistory as Model<IBalanceHistoryDocument> | undefined) ??
+  model<IBalanceHistoryDocument>("BalanceHistory", balanceHistorySchema);

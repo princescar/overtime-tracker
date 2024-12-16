@@ -1,10 +1,7 @@
-import { ClientSession, FilterQuery } from "mongoose";
+import type { ClientSession, FilterQuery } from "mongoose";
 import { BalanceChangeType } from "#/types/balance";
 import { User } from "#/models/user.db";
-import {
-  BalanceHistory,
-  IBalanceHistoryDocument,
-} from "#/models/balance-history.db";
+import { BalanceHistory, type IBalanceHistoryDocument } from "#/models/balance-history.db";
 
 interface GetBalanceHistoryInput {
   userId: string;
@@ -46,10 +43,7 @@ export class BalanceService {
    * Update user balance and record the change in history
    * Must be called within a transaction
    */
-  async updateBalance(
-    input: UpdateBalanceInput,
-    session: ClientSession,
-  ): Promise<void> {
+  async updateBalance(input: UpdateBalanceInput, session: ClientSession): Promise<void> {
     const { userId, amount, type, description, worklogId } = input;
 
     // Update the balance
@@ -114,14 +108,9 @@ export class BalanceService {
     const query: FilterQuery<IBalanceHistoryDocument> = { userId };
 
     if (startDate || endDate) {
-      query.$or = [
-        { timestamp: { $lte: endDate } },
-        { timestamp: { $gte: startDate } },
-      ];
+      query.$or = [{ timestamp: { $lte: endDate } }, { timestamp: { $gte: startDate } }];
     }
 
-    return BalanceHistory.find(query)
-      .sort({ timestamp: -1 })
-      .populate("worklogId");
+    return BalanceHistory.find(query).sort({ timestamp: -1 }).populate("worklogId");
   }
 }

@@ -1,51 +1,40 @@
-import { resolve } from "path";
+import { fileURLToPath } from "url";
 import { includeIgnoreFile } from "@eslint/compat";
-import tsPlugin from "@typescript-eslint/eslint-plugin";
-import tsParser from "@typescript-eslint/parser";
-import reactPlugin from "eslint-plugin-react";
-import reactHooksPlugin from "eslint-plugin-react-hooks";
-import prettierRecommended from "eslint-plugin-prettier/recommended";
+import js from "@eslint/js";
+import svelte from "eslint-plugin-svelte";
+import ts from "typescript-eslint";
+import prettier from "eslint-plugin-prettier/recommended";
 import globals from "globals";
 
-export default [
-  includeIgnoreFile(resolve(__dirname, ".gitignore")),
+const gitignorePath = fileURLToPath(new URL("./.gitignore", import.meta.url));
+
+export default ts.config(
+  includeIgnoreFile(gitignorePath),
+  js.configs.recommended,
+  ...ts.configs.strictTypeChecked,
+  ...ts.configs.stylisticTypeChecked,
+  ...svelte.configs["flat/recommended"],
+  prettier,
+  ...svelte.configs["flat/prettier"],
   {
-    files: ["src/**/*.{ts,tsx}"],
     languageOptions: {
-      parser: tsParser,
       parserOptions: {
         projectService: true,
-        ecmaVersion: "latest",
-        sourceType: "module",
-        ecmaFeatures: {
-          jsx: true,
-        },
+        tsconfigRootDir: import.meta.url,
+        extraFileExtensions: [".svelte"],
       },
       globals: {
         ...globals.browser,
-        ...globals.es2021,
         ...globals.node,
       },
     },
-    plugins: {
-      "@typescript-eslint": tsPlugin,
-      react: reactPlugin,
-      "react-hooks": reactHooksPlugin,
-    },
-    rules: {
-      ...tsPlugin.configs["recommended-type-checked"].rules,
-      ...tsPlugin.configs.strict.rules,
-      ...tsPlugin.configs.stylistic.rules,
-      ...reactPlugin.configs.recommended.rules,
-      ...reactHooksPlugin.configs.recommended.rules,
-      "react/react-in-jsx-scope": "off",
-      "react/prop-types": "off",
-    },
-    settings: {
-      react: {
-        version: "detect",
+  },
+  {
+    files: ["**/*.svelte"],
+    languageOptions: {
+      parserOptions: {
+        parser: ts.parser,
       },
     },
   },
-  prettierRecommended,
-];
+);

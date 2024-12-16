@@ -42,10 +42,7 @@ export const getRequiredBooleanEnvVar = (key: string): boolean => {
   return ["true", "1", "yes"].includes(value);
 };
 
-export const getBooleanEnvVar = (
-  key: string,
-  defaultValue: boolean,
-): boolean => {
+export const getBooleanEnvVar = (key: string, defaultValue: boolean): boolean => {
   const value = process.env[key]?.toLowerCase();
   if (!value) return defaultValue;
 

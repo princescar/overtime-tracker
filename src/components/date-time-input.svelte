@@ -1,0 +1,50 @@
+<script lang="ts">
+  import clsx from "clsx";
+  import dayjs from "dayjs";
+  import type { HTMLAttributes } from "svelte/elements";
+
+  interface DateTimeInputProps {
+    value?: Date | null;
+    max?: Date | null;
+    min?: Date | null;
+    className?: string | null;
+    placeholder?: string;
+    required?: boolean;
+  }
+
+  let { value = $bindable(), max, min, placeholder, required, class: className, ...props }: DateTimeInputProps & HTMLAttributes<HTMLInputElement> = $props();
+
+  const formatForInput = (date?: Date | null) => {
+    if (!date) return "";
+    try {
+      return dayjs(date).format("YYYY-MM-DDTHH:mm");
+    } catch {
+      return ""; // Handle invalid date objects gracefully
+    }
+  };
+
+  const handleChange = (dateString?: string) => {
+    if (!dateString) {
+      value = null;
+      return;
+    }
+    try {
+      value = new Date(dateString);
+    } catch {
+      // Handle invalid date strings gracefully
+      value = null;
+    }
+  };
+</script>
+
+<input
+  type="datetime-local"
+  class={clsx("w-full rounded-md border border-gray-300 p-2", className)}
+  value={formatForInput(value)}
+  onchange={(e) => handleChange(e.currentTarget.value)}
+  max={formatForInput(max)}
+  min={formatForInput(min)}
+  {placeholder}
+  {required}
+  {...props}
+/>
