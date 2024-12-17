@@ -1,7 +1,7 @@
 <script lang="ts">
   import dayjs from "dayjs";
   import { t } from "#/stores/messages.svelte";
-  import { WorkLocation, type IWorklog } from "#/types/worklog";
+  import { type IWorklog } from "#/types/worklog";
   import Modal from "#/components/modal.svelte";
   import Button from "#/components/button.svelte";
   import ToggleGroup from "#/components/toggle-group.svelte";
@@ -18,6 +18,18 @@
 
   let endTime = $state(new Date());
   let isCompletingWork = $state(false);
+
+  const minutesAgo = {
+    read() {
+      return String(dayjs().startOf("minute").diff(dayjs(endTime).startOf("minute"), "minutes"));
+    },
+    write(value: string) {
+      const newEndTime = dayjs().startOf("minute").subtract(parseInt(value), "minutes").toDate();
+      if (+newEndTime !== +endTime) {
+        endTime = newEndTime;
+      }
+    }
+  }
 
   $effect(() => {
     if (open) {
@@ -44,11 +56,9 @@
   {#snippet heading()}{t("mark_complete")}{/snippet}
   <div class="flex flex-col gap-4">
     <div>
-    <div class="text-sm font-medium">{t("end_time")}</div>
+      <div class="text-sm font-medium">{t("end_time")}</div>
       <ToggleGroup
-        bind:value={() =>
-          dayjs().startOf("minute").diff(dayjs(endTime).startOf("minute"), "minutes").toString(),
-        (v) => (endTime = dayjs().startOf("minute").subtract(parseInt(v), "minutes").toDate())}
+        bind:value={minutesAgo.read, minutesAgo.write}
         options={[
           { value: "0", label: t("now") },
           { value: "5", label: t("minutes_ago", { count: 5 }) },
