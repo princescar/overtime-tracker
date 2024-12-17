@@ -8,9 +8,10 @@
       value: string;
       label: string;
     }[];
+    onValueChange?: (newValue: string) => void;
   }
 
-  let { value = $bindable(), options }: ToggleGroupProps = $props();
+  let { value = $bindable(), options, onValueChange }: ToggleGroupProps = $props();
 
   const {
     elements: { root, item },
@@ -23,7 +24,11 @@
     $stateValue = value;
   });
   $effect(() => {
-    value = $stateValue as string;
+    const newValue = $stateValue as string;
+    if (value !== newValue) {
+      onValueChange?.(newValue);
+    }
+    value = newValue;
   });
 </script>
 

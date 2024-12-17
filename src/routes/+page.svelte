@@ -4,19 +4,27 @@
   import { t } from "#/stores/messages.svelte";
   import { WorkLocation, type IWorklog } from "#/types/worklog";
   import Button from "#/components/button.svelte";
-  import StartWorkModal from "./start-work-modal.svelte";
   import {
     worklogsStore,
     loadMoreCompletedWorks,
+    createInProgressWork,
     cancelInProgressWork,
+    modifyInProgressWork,
   } from "#/stores/worklogs.svelte";
   import { balanceStore } from "#/stores/balance.svelte";
+  import { toastError } from "#/stores/toasts.svelte";
   import CompleteWorkModal from "./complete-work-modal.svelte";
   import CreateCompletedWorkModal from "./create-completed-work-modal.svelte";
+  import DateTimeInput from "#/components/date-time-input.svelte";
+  import ToggleGroup from "#/components/toggle-group.svelte";
 
   // States
-  let loading = $state(false);
-  let isStartWorkModalOpen = $state(false),
+  let loading = $state(false),
+    isStartingNewWork = $state(false),
+    isCancelingWork = $state(false),
+    isEditingLocation = $state(false),
+    isEditingDescription = $state(false),
+    isEditingStartTime = $state(false),
     isCompleteWorkModalOpen = $state(false),
     isCreateCompletedWorkModalOpen = $state(false);
 
@@ -48,6 +56,77 @@
     }
 
     return output;
+  };
+
+  // Actions
+  const onStartNewWork = async () => {
+    isStartingNewWork = true;
+    try {
+      await createInProgressWork({
+        startTime: dayjs().startOf("minute").toDate(),
+        location: WorkLocation.HOME,
+      });
+    } catch (error) {
+      console.error(error);
+      toastError(error);
+    } finally {
+      isStartingNewWork = false;
+    }
+  };
+
+  const onCancelWork = async (id: string) => {
+    isCancelingWork = true;
+    try {
+      await cancelInProgressWork(id);
+    } catch (error) {
+      console.error(error);
+      toastError(error);
+    } finally {
+      isCancelingWork = false;
+    }
+  };
+
+  const onChangeLocation = async (newLocation: WorkLocation) => {
+    if (!worklogsStore.inProgressWork) return;
+    const oldLocation = worklogsStore.inProgressWork.location;
+    worklogsStore.inProgressWork.location = newLocation;
+    isEditingLocation = false;
+    try {
+      await modifyInProgressWork(worklogsStore.inProgressWork.id, { location: newLocation });
+    } catch(error) {
+      console.error(error);
+      toastError(error);
+      worklogsStore.inProgressWork.location = oldLocation;
+    }
+  };
+
+  const onChangeDescription = async (newDescription: string) => {
+    if (!worklogsStore.inProgressWork) return;
+    const oldDescription = worklogsStore.inProgressWork.description;
+    worklogsStore.inProgressWork.description = newDescription || undefined;
+    isEditingDescription = false;
+    try {
+      await modifyInProgressWork(worklogsStore.inProgressWork.id, { description: newDescription });
+    } catch(error) {
+      console.error(error);
+      toastError(error);
+      worklogsStore.inProgressWork.description = oldDescription;
+    }
+  };
+
+  const onChangeStartTime = async (newStartTimeString: string) => {
+    if (!worklogsStore.inProgressWork) return;
+    const newStartTime = new Date(newStartTimeString);
+    const oldStartTime = worklogsStore.inProgressWork.startTime;
+    worklogsStore.inProgressWork.startTime = newStartTime;
+    isEditingStartTime = false;
+    try {
+      await modifyInProgressWork(worklogsStore.inProgressWork.id, { startTime: newStartTime });
+    } catch(error) {
+      console.error(error);
+      toastError(error);
+      worklogsStore.inProgressWork.startTime = oldStartTime;
+    }
   };
 </script>
 
@@ -88,7 +167,6 @@
   </div>
 </div>
 
-<StartWorkModal bind:open={isStartWorkModalOpen} />
 <CompleteWorkModal
   bind:open={isCompleteWorkModalOpen}
   inProgressWork={worklogsStore.inProgressWork}
@@ -124,7 +202,8 @@
       </div>
       {#if !worklogsStore.inProgressWork}
         <div class="mt-4 flex gap-4">
-          <Button onclick={() => (isStartWorkModalOpen = true)}>{t("start_new_work")}</Button>
+          <Button onclick={onStartNewWork} loading={isStartingNewWork}>{t("start_new_work")}</Button
+          >
           <Button variant="light" onclick={() => (isCreateCompletedWorkModalOpen = true)}>
             {t("log_completed_work")}
           </Button>
@@ -136,26 +215,71 @@
 
 {#snippet inProgressWorkCard({ id, location, startTime, description }: IWorklog)}
   <div class="rounded-lg border border-lime-100 bg-lime-50 p-4 shadow-sm">
-    <div class="flex h-full flex-col justify-between gap-2">
+    <div class="flex h-full flex-col gap-2">
       <div class="flex items-center justify-between">
-        <span class="text-lg font-medium">
-          {@render workSummary(location, startTime)}
-        </span>
+        {#if isEditingLocation}
+          <ToggleGroup
+            value={location}
+            options={[
+              { value: WorkLocation.HOME, label: t("home") },
+              { value: WorkLocation.OFFICE, label: t("office") },
+              { value: WorkLocation.BUSINESS_TRIP, label: t("business_trip") },
+            ]}
+            onValueChange={(newValue) => onChangeLocation(newValue as WorkLocation)}
+          />
+        {:else}
+          <button
+            class="-mx-1 rounded border border-transparent px-1 text-lg font-medium hover:border-neutral-200"
+            onclick={() => (isEditingLocation = true)}
+            title={t("click_to_edit")}
+          >
+            {@render workSummary(location, startTime)}
+          </button>
+        {/if}
         <span
           class="rounded-full bg-blue-100 px-2 py-1 text-xs font-medium uppercase text-blue-500"
         >
           {t("in_progress")}
         </span>
       </div>
-      <span class="text-sm text-gray-500">
-        {description}
-      </span>
-      <span class="text-sm text-gray-500">
-        {@render timeRange(startTime)}
-      </span>
+      {#if isEditingDescription}
+        <!-- svelte-ignore a11y_autofocus -->
+        <input
+          class="p-2"
+          value={description}
+          onkeypress={(e) => e.key === "Enter" && onChangeDescription(e.currentTarget.value)}
+          onblur={(e) => onChangeDescription(e.currentTarget.value)}
+          autofocus
+        />
+      {:else}
+        <button
+          class="-mx-1 self-start rounded border border-transparent px-1 text-sm hover:border-neutral-200"
+          class:text-gray-500={!!description}
+          class:text-gray-400={!description}
+          onclick={() => (isEditingDescription = true)}
+          title={t("click_to_edit")}
+        >
+          {description || t("description_placeholder")}
+        </button>
+      {/if}
+      {#if isEditingStartTime}
+        <DateTimeInput
+          value={startTime}
+          autofocus
+          onblur={(e) => onChangeStartTime(e.currentTarget.value)}
+        />
+      {:else}
+        <button
+          class="-mx-1 self-start rounded border border-transparent px-1 text-sm text-gray-500 hover:border-neutral-200"
+          onclick={() => (isEditingStartTime = true)}
+          title={t("click_to_edit")}
+        >
+          {@render timeRange(startTime)}
+        </button>
+      {/if}
       <div class="mt-4 flex gap-4">
         <Button onclick={() => (isCompleteWorkModalOpen = true)}>{t("mark_as_complete")}</Button>
-        <Button variant="danger" onclick={() => cancelInProgressWork(id)}>
+        <Button variant="danger" onclick={() => onCancelWork(id)} loading={isCancelingWork}>
           {t("cancel")}
         </Button>
       </div>

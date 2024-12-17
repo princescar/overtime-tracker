@@ -81,6 +81,13 @@ export const cancelInProgressWork = async (worklogId: string) => {
   inProgressWork = undefined;
 };
 
+export const modifyInProgressWork = async (worklogId: string, properties: Partial<IWorklog>) => {
+  const result = await request(`/api/worklogs/${worklogId}`, "PATCH", properties);
+  const parsed = worklogSchema.parse(result);
+
+  inProgressWork = parsed;
+}
+
 export const completeInProgressWork = async (worklogId: string, endTime: Date) => {
   const result = await request<IWorklog>(`/api/worklogs/${worklogId}/completion`, "POST", {
     endTime,
