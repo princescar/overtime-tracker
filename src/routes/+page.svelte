@@ -17,6 +17,7 @@
   import CreateCompletedWorkModal from "./create-completed-work-modal.svelte";
   import DateTimeInput from "#/components/date-time-input.svelte";
   import ToggleGroup from "#/components/toggle-group.svelte";
+  import ConfirmDialog from "#/components/confirm-dialog.svelte";
 
   // States
   let loading = $state(false),
@@ -27,6 +28,9 @@
     isEditingStartTime = $state(false),
     isCompleteWorkModalOpen = $state(false),
     isCreateCompletedWorkModalOpen = $state(false);
+
+  // Refs
+  let confirmDialog: ConfirmDialog;
 
   // Computation helpers
   const calculateTotalMinutes = (...timeRanges: { startTime: Date; endTime?: Date }[]) =>
@@ -75,6 +79,12 @@
   };
 
   const onCancelWork = async (id: string) => {
+    try {
+      await confirmDialog.promptConfirm(t("confirm_to_cancel_work"), t("cancel"));
+    } catch {
+      return;
+    }
+
     isCancelingWork = true;
     try {
       await cancelInProgressWork(id);
@@ -93,7 +103,7 @@
     isEditingLocation = false;
     try {
       await modifyInProgressWork(worklogsStore.inProgressWork.id, { location: newLocation });
-    } catch(error) {
+    } catch (error) {
       console.error(error);
       toastError(error);
       worklogsStore.inProgressWork.location = oldLocation;
@@ -107,7 +117,7 @@
     isEditingDescription = false;
     try {
       await modifyInProgressWork(worklogsStore.inProgressWork.id, { description: newDescription });
-    } catch(error) {
+    } catch (error) {
       console.error(error);
       toastError(error);
       worklogsStore.inProgressWork.description = oldDescription;
@@ -122,7 +132,7 @@
     isEditingStartTime = false;
     try {
       await modifyInProgressWork(worklogsStore.inProgressWork.id, { startTime: newStartTime });
-    } catch(error) {
+    } catch (error) {
       console.error(error);
       toastError(error);
       worklogsStore.inProgressWork.startTime = oldStartTime;
@@ -172,6 +182,8 @@
   inProgressWork={worklogsStore.inProgressWork}
 />
 <CreateCompletedWorkModal bind:open={isCreateCompletedWorkModalOpen} />
+
+<ConfirmDialog bind:this={confirmDialog} />
 
 {#snippet workSummary(location: WorkLocation, date: Date)}
   {@const keys = {
