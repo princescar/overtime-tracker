@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 import { z } from "zod";
 import { request } from "#/utils/request";
-import { WorkLocation, type IWorklog } from "#/types/worklog";
+import { WorkLocation, WorklogStatus, type IWorklog } from "#/types/worklog";
 
 let completedWorks = $state<IWorklog[]>([]);
 let totalCompletedWorks = $state(0);
@@ -61,7 +61,7 @@ export const loadMoreCompletedWorks = async () => {
   const skip = worklogsStore.completedWorks.length;
   const limit = 10;
   const result = await request<{ worklogs: IWorklog[]; total: number }>(
-    `/api/worklogs?status={WorklogStatus.COMPLETED}&skip=${String(skip)}&limit=${String(limit)}`,
+    `/api/worklogs?status=${WorklogStatus.COMPLETED}&skip=${String(skip)}&limit=${String(limit)}`,
     "GET",
   );
   const parsedWorklogs = result.worklogs.map((worklog) => worklogSchema.parse(worklog));
