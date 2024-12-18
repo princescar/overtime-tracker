@@ -24,7 +24,7 @@ interface ModifyWorkInput {
   worklogId: string;
   userId: string;
   startTime?: Date | string;
-  description?: string;
+  description?: string | null;
   location?: WorkLocation;
 }
 
@@ -193,7 +193,11 @@ export class WorklogService {
       worklog.startTime = parsedStartTime;
     }
 
-    if (description) worklog.description = description;
+    if (description == null) {
+      worklog.description = undefined; // Delete the property when set to null.
+    } else {
+      worklog.description = description;
+    }
 
     if (location) {
       validateWorkLocation(location);

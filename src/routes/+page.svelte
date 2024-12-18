@@ -113,10 +113,13 @@
   const onChangeDescription = async (newDescription: string) => {
     if (!worklogsStore.inProgressWork) return;
     const oldDescription = worklogsStore.inProgressWork.description;
-    worklogsStore.inProgressWork.description = newDescription || undefined;
+    newDescription = newDescription.trim();
+    worklogsStore.inProgressWork.description = newDescription;
     isEditingDescription = false;
     try {
-      await modifyInProgressWork(worklogsStore.inProgressWork.id, { description: newDescription });
+      await modifyInProgressWork(worklogsStore.inProgressWork.id, {
+        description: newDescription || null, // Set to null to clear the value if it's blank
+      });
     } catch (error) {
       console.error(error);
       toastError(error);

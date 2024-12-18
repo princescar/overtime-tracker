@@ -30,7 +30,7 @@ export const PATCH: RequestHandler = async ({ request, locals, params }) => {
     const { startTime, description, location } = z
       .object({
         startTime: z.coerce.date().optional(),
-        description: z.string().optional(),
+        description: z.string().nullable().optional(),
         location: z.nativeEnum(WorkLocation).optional(),
       })
       .parse(body);

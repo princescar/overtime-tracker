@@ -14,6 +14,6 @@ export interface IWorklog {
   userId: string;
   startTime: Date;
   endTime?: Date;
-  description?: string;
+  description?: string | null;
   location: WorkLocation;
 }
