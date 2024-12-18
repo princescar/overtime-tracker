@@ -14,6 +14,8 @@
 
   let { value = $bindable(), max, min, placeholder, required, class: className, ...props }: DateTimeInputProps & HTMLAttributes<HTMLInputElement> = $props();
 
+  export const getValue = () => { return value };
+
   const formatForInput = (date?: Date | null) => {
     if (!date) return "";
     try {

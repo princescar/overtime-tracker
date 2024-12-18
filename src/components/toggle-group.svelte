@@ -1,5 +1,6 @@
 <script lang="ts">
   import clsx from "clsx";
+  import type { HTMLAttributes } from "svelte/elements";
   import { createToggleGroup, melt } from "@melt-ui/svelte";
 
   interface ToggleGroupProps {
@@ -11,7 +12,13 @@
     onValueChange?: (newValue: string) => void;
   }
 
-  let { value = $bindable(), options, onValueChange }: ToggleGroupProps = $props();
+  let {
+    value = $bindable(),
+    options,
+    onValueChange,
+    class: className,
+    ...props
+  }: ToggleGroupProps & HTMLAttributes<HTMLDivElement> = $props();
 
   const {
     elements: { root, item },
@@ -32,7 +39,7 @@
   });
 </script>
 
-<div use:melt={$root} class="flex">
+<div use:melt={$root} class={clsx("flex", className)} {...props}>
   {#each options as option, index}
     <button
       use:melt={$item(option.value)}
