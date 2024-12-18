@@ -24,7 +24,7 @@ export const t = (id: string, props?: Record<string, unknown>) => {
     throw new Error("Messages not loaded");
   }
 
-  return messages.get(id, props) as string | undefined;
+  return messages.get(id, props) as string;
 };
 
 export const language = () => {

@@ -2,7 +2,7 @@ import type { ApiResponse } from "./responseFormatter";
 
 export const request = async <T>(
   url: string,
-  method = "GET",
+  method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" = "GET",
   requestBody?: unknown,
 ): Promise<T> => {
   let responseBody: ApiResponse<T>;

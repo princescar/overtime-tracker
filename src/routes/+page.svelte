@@ -10,6 +10,7 @@
     createInProgressWork,
     cancelInProgressWork,
     modifyInProgressWork,
+    deleteCompletedWork,
   } from "#/stores/worklogs.svelte";
   import { balanceStore } from "#/stores/balance.svelte";
   import { toastError } from "#/stores/toasts.svelte";
@@ -27,7 +28,8 @@
     isEditingDescription = $state(false),
     isEditingStartTime = $state(false),
     isCompleteWorkModalOpen = $state(false),
-    isCreateCompletedWorkModalOpen = $state(false);
+    isCreateCompletedWorkModalOpen = $state(false),
+    deletingWorklogId = $state<string>();
 
   // Refs
   let confirmDialog: ConfirmDialog;
@@ -140,6 +142,24 @@
       console.error(error);
       toastError(error);
       worklogsStore.inProgressWork.startTime = oldStartTime;
+    }
+  };
+
+  const onDeleteWork = async (id: string) => {
+    try {
+      await confirmDialog.promptConfirm(t("confirm_to_delete_work"), t("delete"));
+    } catch {
+      return;
+    }
+
+    deletingWorklogId = id;
+    try {
+      await deleteCompletedWork(id);
+    } catch (error) {
+      console.error(error);
+      toastError(error);
+    } finally {
+      deletingWorklogId = undefined;
     }
   };
 </script>
@@ -344,8 +364,17 @@
         </button>
       {/if}
       <div class="mt-5 flex gap-4">
-        <Button onclick={() => (isCompleteWorkModalOpen = true)} disabled={isEditingLocation || isEditingDescription || isEditingStartTime}>{t("mark_as_complete")}</Button>
-        <Button variant="danger" onclick={() => onCancelWork(id)} disabled={isEditingLocation || isEditingDescription || isEditingStartTime} loading={isCancelingWork}>
+        <Button
+          onclick={() => (isCompleteWorkModalOpen = true)}
+          disabled={isEditingLocation || isEditingDescription || isEditingStartTime}
+          >{t("mark_as_complete")}</Button
+        >
+        <Button
+          variant="danger"
+          onclick={() => onCancelWork(id)}
+          disabled={isEditingLocation || isEditingDescription || isEditingStartTime}
+          loading={isCancelingWork}
+        >
           {t("cancel")}
         </Button>
       </div>
@@ -354,17 +383,29 @@
   </div>
 {/snippet}
 
-{#snippet completedWorkCard({ location, startTime, endTime, description }: IWorklog)}
-  <div class="rounded-lg border border-slate-300 p-4 shadow-sm">
+{#snippet completedWorkCard({ id, location, startTime, endTime, description }: IWorklog)}
+  <div
+    class="group rounded-lg border border-slate-300 p-4 shadow-sm hover:bg-neutral-100/50 transition-opacity"
+    class:opacity-50={deletingWorklogId === id}
+    class:pointer-events-none={deletingWorklogId === id}
+  >
     <div class="flex flex-col gap-2">
       <div class="flex items-center justify-between">
         <span class="text-lg">
           {@render workSummary(location, startTime)}
         </span>
         {#if endTime}
-          <span class="text-gray-500">
+          <span class="text-gray-500 group-hover:hidden">
             {durationDisplay(calculateTotalMinutes({ startTime, endTime }))}
           </span>
+          <Button
+            variant="danger"
+            compact
+            class="hidden group-hover:block"
+            onclick={() => onDeleteWork(id)}
+          >
+            {t("delete")}
+          </Button>
         {/if}
       </div>
       <span class="text-sm text-gray-500">{description}</span>

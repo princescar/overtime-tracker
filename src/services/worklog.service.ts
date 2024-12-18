@@ -266,16 +266,19 @@ export class WorklogService {
       throw new WorklogError(WorklogErrorCode.WORKLOG_NOT_FOUND, "Worklog not found");
     }
 
-    if (worklog.endTime) {
-      throw new WorklogError(
-        WorklogErrorCode.WORKLOG_ALREADY_COMPLETED,
-        "Cannot delete completed work",
-      );
-    }
+    await withTransaction(async (session) => {
+      if (worklog.endTime) {
+        // Calculate cost
+        const cost = this.calculateCost(worklog.startTime, worklog.endTime);
 
-    // Mark as deleted instead of removing
-    worklog.deleted = true;
-    await worklog.save();
+        // Revert cost deduction from balance
+        await this.balanceService.revertWorklogCost(userId, cost, worklogId, session);
+      }
+
+      // Mark as deleted instead of removing
+      worklog.deleted = true;
+      await worklog.save({ session });
+    });
   }
 
   /**
@@ -426,10 +429,11 @@ export class WorklogService {
    * Calculate work duration and cost
    */
   private calculateCost(startTime: Date, endTime: Date): number {
-    const duration = endTime.getTime() - startTime.getTime();
-    const durationMinutes = Math.floor(duration / (1000 * 60));
+    const start = dayjs(startTime).startOf("minute");
+    const end = dayjs(endTime).startOf("minute");
+    const minutes = end.diff(start, "minutes");
     const costRate = getRequiredNumericEnvVar("WORK_COST_PER_MINUTE");
-    return durationMinutes * costRate;
+    return minutes * costRate;
   }
 
   /**

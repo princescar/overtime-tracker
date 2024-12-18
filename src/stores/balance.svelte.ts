@@ -12,7 +12,7 @@ export const initBalanceStore = (initialBalance: number) => {
   balance = initialBalance;
 };
 
-export const refresh = async () => {
-  const { balance: refreshedBalance } = await request<{ balance: number }>("GET", "/api/balance");
+export const refreshBalance = async () => {
+  const { balance: refreshedBalance } = await request<{ balance: number }>("/api/balance", "GET");
   balance = refreshedBalance;
 };

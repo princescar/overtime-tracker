@@ -9,7 +9,7 @@ interface GetBalanceHistoryInput {
   endDate?: Date;
 }
 
-interface UpdateBalanceInput {
+interface IncrementBalanceInput {
   userId: string;
   amount: number;
   type: BalanceChangeType;
@@ -40,10 +40,10 @@ export class BalanceService {
   }
 
   /**
-   * Update user balance and record the change in history
+   * Increment user balance by amount, and record the change in history
    * Must be called within a transaction
    */
-  async updateBalance(input: UpdateBalanceInput, session: ClientSession): Promise<void> {
+  async incrementBalance(input: IncrementBalanceInput, session: ClientSession): Promise<void> {
     const { userId, amount, type, description, worklogId } = input;
 
     // Update the balance
@@ -87,12 +87,33 @@ export class BalanceService {
     worklogId: string,
     session: ClientSession,
   ): Promise<void> {
-    await this.updateBalance(
+    await this.incrementBalance(
       {
         userId,
         amount: -amount,
         type: BalanceChangeType.WORKLOG,
         description: "Balance deducted for worklog entry",
+        worklogId,
+      },
+      session,
+    );
+  }
+
+  /**
+   * Convenience method for revert worklog-related balance deductions
+   */
+  async revertWorklogCost(
+    userId: string,
+    amount: number,
+    worklogId: string,
+    session: ClientSession,
+  ): Promise<void> {
+    await this.incrementBalance(
+      {
+        userId,
+        amount,
+        type: BalanceChangeType.WORKLOG,
+        description: "Revert balance deduction for worklog entry",
         worklogId,
       },
       session,

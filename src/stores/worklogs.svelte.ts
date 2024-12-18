@@ -2,6 +2,7 @@ import dayjs from "dayjs";
 import { z } from "zod";
 import { request } from "#/utils/request";
 import { WorkLocation, WorklogStatus, type IWorklog } from "#/types/worklog";
+import { refreshBalance } from "./balance.svelte";
 
 let completedWorks = $state<IWorklog[]>([]);
 let totalCompletedWorks = $state(0);
@@ -81,12 +82,23 @@ export const cancelInProgressWork = async (worklogId: string) => {
   inProgressWork = undefined;
 };
 
+export const deleteCompletedWork = async (worklogId: string) => {
+  await request(`/api/worklogs/${worklogId}`, "DELETE");
+
+  const index = completedWorks.findIndex((x) => x.id === worklogId);
+  if (index > -1) {
+    completedWorks.splice(index, 1);
+  }
+
+  await refreshBalance();
+};
+
 export const modifyInProgressWork = async (worklogId: string, properties: Partial<IWorklog>) => {
   const result = await request(`/api/worklogs/${worklogId}`, "PATCH", properties);
   const parsed = worklogSchema.parse(result);
 
   inProgressWork = parsed;
-}
+};
 
 export const completeInProgressWork = async (worklogId: string, endTime: Date) => {
   const result = await request<IWorklog>(`/api/worklogs/${worklogId}/completion`, "POST", {
@@ -97,6 +109,8 @@ export const completeInProgressWork = async (worklogId: string, endTime: Date) =
   inProgressWork = undefined;
   completedWorks.unshift(parsedWorklog);
   totalCompletedWorks += 1;
+
+  await refreshBalance();
 };
 
 export const createCompletedWork = async (worklog: Omit<IWorklog, "id" | "userId">) => {
@@ -105,4 +119,6 @@ export const createCompletedWork = async (worklog: Omit<IWorklog, "id" | "userId
 
   completedWorks.unshift(parsedWorklog);
   totalCompletedWorks += 1;
+
+  await refreshBalance();
 };
