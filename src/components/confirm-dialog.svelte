@@ -38,7 +38,7 @@
 <Modal bind:open>
   {#snippet heading()}{title}{/snippet}
   {message}
-  <div class="flex justify-end gap-4">
+  <div class="mt-8 flex justify-end gap-4">
     <Button onclick={onConfirm}>{t("confirm")}</Button>
   </div>
 </Modal>
