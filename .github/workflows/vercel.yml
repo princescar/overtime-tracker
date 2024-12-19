@@ -2,7 +2,7 @@ name: Vercel
 
 on:
   push:
-    branches: [svelte-vercel]
+    branches: [vercel]
 
 jobs:
   build-and-deploy:
