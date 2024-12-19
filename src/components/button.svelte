@@ -17,11 +17,11 @@
   const compactButtonStyles =
     "px-1 py-0.5 rounded-md text-sm transition-colors cursor-pointer flex items-center justify-center gap-1";
   const buttonVariants = {
-    default: "bg-blue-500 text-white hover:bg-blue-600",
+    default: "bg-emerald-500 text-white hover:bg-emerald-600",
     light: "bg-gray-100 text-gray-700 hover:bg-gray-200",
-    subtle: "text-gray-600 hover:bg-neutral-300/50",
-    filled: "bg-blue-100 text-blue-800 hover:bg-blue-200",
-    danger: "text-red-500 hover:bg-red-300/25 hover:text-red-600",
+    subtle: "text-gray-600 hover:bg-gray-200/50",
+    filled: "bg-emerald-100 text-emerald-800 hover:bg-emerald-200",
+    danger: "text-red-600 hover:bg-red-100 hover:text-red-700",
   };
 
   const {
