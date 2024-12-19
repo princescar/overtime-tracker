@@ -178,11 +178,17 @@
 
     <div class="mt-8 flex flex-col gap-4">
       <h2 class="text-2xl font-bold">{t("recent_worklogs")}</h2>
-      <div class="flex flex-col gap-4">
-        {#each Object.entries(worklogsStore.completedWorksByWeek) as [weekKey, worklogsInWeek] (weekKey)}
-          {@render weekSectionGroup(new Date(weekKey), worklogsInWeek)}
-        {/each}
-      </div>
+      {#if Object.entries(worklogsStore.completedWorksByWeek).length > 0}
+        <div class="flex flex-col gap-4">
+          {#each Object.entries(worklogsStore.completedWorksByWeek) as [weekKey, worklogsInWeek] (weekKey)}
+            {@render weekSectionGroup(new Date(weekKey), worklogsInWeek)}
+          {/each}
+        </div>
+      {:else}
+        <div class="flex justify-center">
+          <div class="text-gray-500">{t("no_recent_worklogs")}</div>
+        </div>
+      {/if}
 
       {#if loading}
         <div class="flex justify-center">
