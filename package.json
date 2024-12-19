@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
+    "build:vercel": "VERCEL=true vite build",
     "lint": "eslint src --flag unstable_ts_config",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
   },
@@ -14,6 +15,7 @@
     "@melt-ui/svelte": "^0.86.2",
     "@messageformat/runtime": "^3.0.1",
     "@sveltejs/adapter-node": "^5.2.10",
+    "@sveltejs/adapter-vercel": "^5.5.2",
     "@sveltejs/kit": "^2.12.1",
     "@sveltejs/vite-plugin-svelte": "^5.0.2",
     "accept-language": "^3.0.20",

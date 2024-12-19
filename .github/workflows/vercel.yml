@@ -2,7 +2,7 @@ name: Vercel
 
 on:
   push:
-    branches: [vercel]
+    tags: [ 'v*' ]
 
 jobs:
   build-and-deploy:
@@ -22,7 +22,7 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - run: pnpm build
+      - run: pnpm build:vercel
 
       - uses: amondnet/vercel-action@v25
         with:
