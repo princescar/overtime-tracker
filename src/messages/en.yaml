@@ -1,5 +1,6 @@
 language: "English"
 overtime_tracker: "Overtime Tracker"
+overtime_tracker_description: "Track your overtime"
 work_at_home: "Work at home"
 work_in_office: "Work in the office"
 business_trip: "Business trip"

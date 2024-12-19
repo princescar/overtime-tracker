@@ -24,6 +24,7 @@
 
 <svelte:head>
   <title>{t("overtime_tracker")}</title>
+  <meta name="description" content={t("overtime_tracker_description")} />
 </svelte:head>
 
 {#snippet switchLanguageButton()}
