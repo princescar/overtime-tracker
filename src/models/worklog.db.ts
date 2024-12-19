@@ -1,7 +1,7 @@
-import mongoose, { type Document, type Model } from "mongoose";
+import mongoose, { type Document, type Model, type ObjectId } from "mongoose";
 import { type IWorklog, WorkLocation } from "#/types/worklog";
 
-export interface IWorklogDocument extends Omit<IWorklog, "id">, Document {
+export interface IWorklogDocument extends Omit<IWorklog, "id">, Document<ObjectId> {
   deleted: boolean;
 }
 

@@ -7,7 +7,7 @@
   let message = $state("");
   let title = $state("");
   let resolve = $state<(value: PromiseLike<void> | void) => void>();
-  let reject = $state<(reason?: any) => void>();
+  let reject = $state<(reason?: unknown) => void>();
 
   export const promptConfirm = (msg: string, tt: string) => {
     message = msg;

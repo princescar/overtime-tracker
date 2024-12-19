@@ -12,9 +12,19 @@
     required?: boolean;
   }
 
-  let { value = $bindable(), max, min, placeholder, required, class: className, ...props }: DateTimeInputProps & HTMLAttributes<HTMLInputElement> = $props();
+  let {
+    value = $bindable(),
+    max,
+    min,
+    placeholder,
+    required,
+    class: className,
+    ...props
+  }: DateTimeInputProps & HTMLAttributes<HTMLInputElement> = $props();
 
-  export const getValue = () => { return value };
+  export const getValue = () => {
+    return value;
+  };
 
   const formatForInput = (date?: Date | null) => {
     if (!date) return "";
@@ -43,7 +53,9 @@
   type="datetime-local"
   class={clsx("w-full rounded-md border border-gray-300 p-2", className)}
   value={formatForInput(value)}
-  onchange={(e) => handleChange(e.currentTarget.value)}
+  onchange={(e) => {
+    handleChange(e.currentTarget.value);
+  }}
   max={formatForInput(max)}
   min={formatForInput(min)}
   {placeholder}

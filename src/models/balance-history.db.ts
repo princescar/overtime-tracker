@@ -1,7 +1,7 @@
-import mongoose, { type Document, type Model } from "mongoose";
+import mongoose, { type Document, type Model, type ObjectId } from "mongoose";
 import { BalanceChangeType, type IBalanceHistory } from "#/types/balance";
 
-export interface IBalanceHistoryDocument extends Omit<IBalanceHistory, "id">, Document {}
+export interface IBalanceHistoryDocument extends Omit<IBalanceHistory, "id">, Document<ObjectId> {}
 
 const { model, models, Schema } = mongoose;
 

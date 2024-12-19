@@ -16,7 +16,7 @@ export const toastError = (error: unknown) => {
   if (!addToastFunc) {
     throw new Error("Toasts store is not initialized");
   }
-  let message = t("error_unknown") ?? "Unknown error";
+  let message = t("error_unknown");
   if (error instanceof Error) {
     const codedError = error as { code?: string };
     const errorCode = typeof codedError.code === "string" ? codedError.code : undefined;

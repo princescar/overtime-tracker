@@ -32,9 +32,9 @@
     deletingWorklogId = $state<string>();
 
   // Refs
-  let confirmDialog: ConfirmDialog;
-  let descriptionInput: HTMLInputElement;
-  let startTimeInput: DateTimeInput;
+  let confirmDialog = $state<ConfirmDialog>();
+  let descriptionInput = $state<HTMLInputElement>();
+  let startTimeInput = $state<DateTimeInput>();
 
   // Computation helpers
   const calculateTotalMinutes = (...timeRanges: { startTime: Date; endTime?: Date }[]) =>
@@ -84,7 +84,7 @@
 
   const onCancelWork = async (id: string) => {
     try {
-      await confirmDialog.promptConfirm(t("confirm_to_cancel_work"), t("cancel"));
+      await confirmDialog?.promptConfirm(t("confirm_to_cancel_work"), t("cancel"));
     } catch {
       return;
     }
@@ -147,7 +147,7 @@
 
   const onDeleteWork = async (id: string) => {
     try {
-      await confirmDialog.promptConfirm(t("confirm_to_delete_work"), t("delete"));
+      await confirmDialog?.promptConfirm(t("confirm_to_delete_work"), t("delete"));
     } catch {
       return;
     }
@@ -307,12 +307,13 @@
       </div>
       {#if isEditingDescription}
         <div class="flex flex-col gap-2">
+          <!-- svelte-ignore a11y_autofocus -->
           <input class="p-2 text-sm" bind:this={descriptionInput} value={description} autofocus />
           <div class="flex gap-2 self-start">
             <Button
               variant="default"
               class="text-sm"
-              onclick={() => onChangeDescription(descriptionInput.value)}
+              onclick={() => descriptionInput && onChangeDescription(descriptionInput.value)}
             >
               {t("save")}
             </Button>
@@ -329,7 +330,9 @@
           onclick={() => (isEditingDescription = true)}
           title={t("click_to_edit")}
         >
-          {description || t("description_placeholder")}
+          {description == null || description.length === 0
+            ? t("description_placeholder")
+            : description}
           {@render editIcon()}
         </button>
       {/if}
@@ -340,7 +343,7 @@
             <Button
               variant="default"
               class="text-sm"
-              onclick={() => onChangeStartTime(startTimeInput.getValue())}
+              onclick={() => startTimeInput && onChangeStartTime(startTimeInput.getValue())}
             >
               {t("save")}
             </Button>

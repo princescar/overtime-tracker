@@ -10,6 +10,7 @@ export const init: ServerInit = async () => {
   await connectDB();
 };
 
+// eslint-disable-next-line @typescript-eslint/unbound-method
 export const handle: Handle = async ({ event, resolve }) => {
   // Detect language from request
   const language = detectLanguage(

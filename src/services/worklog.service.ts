@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import type { FilterQuery, ObjectId } from "mongoose";
+import type { FilterQuery } from "mongoose";
 import { BalanceService } from "./balance.service";
 import { type IWorklog, WorkLocation, WorklogStatus } from "#/types/worklog";
 import { type IWorklogDocument, Worklog } from "#/models/worklog.db";
@@ -441,7 +441,8 @@ export class WorklogService {
    */
   private toWorklog(doc: IWorklogDocument): IWorklog {
     return {
-      id: (doc._id as ObjectId).toString(),
+      // eslint-disable-next-line @typescript-eslint/no-base-to-string
+      id: doc._id.toString(),
       userId: doc.userId,
       startTime: doc.startTime,
       endTime: doc.endTime,

@@ -36,5 +36,10 @@ export default ts.config(
         parser: ts.parser,
       },
     },
+    rules: {
+      "@typescript-eslint/no-confusing-void-expression": "off",
+      "@typescript-eslint/no-unsafe-call": "off",
+      "@typescript-eslint/no-unsafe-argument": "off",
+    },
   },
 );

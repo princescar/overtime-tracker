@@ -34,7 +34,7 @@ export function createErrorResponse(error: unknown): Response {
   });
 }
 
-export function createSuccessResponse<T>(data: T): Response {
-  const response: SuccessResponse<T> = { success: true, data };
+export function createSuccessResponse(data: unknown): Response {
+  const response: SuccessResponse<unknown> = { success: true, data };
   return Response.json(response);
 }

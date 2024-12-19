@@ -40,10 +40,10 @@
     className,
     compact ? compactButtonStyles : baseButtonStyles,
     buttonVariants[variant],
-    (loading || disabled) && "pointer-events-none opacity-75",
+    (!!loading || !!disabled) && "pointer-events-none opacity-75",
   )}
   {...props}
-  disabled={disabled || loading}
+  disabled={!!disabled || !!loading}
 >
   {#if loading}<Spinner />{/if}
   {@render children()}

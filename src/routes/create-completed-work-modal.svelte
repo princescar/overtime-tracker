@@ -57,7 +57,7 @@
       <DateTimeInput id="startTime" bind:value={endTime} />
     </div>
     <div>
-    <div class="text-sm font-medium">{t("location")}</div>
+      <div class="text-sm font-medium">{t("location")}</div>
       <ToggleGroup
         bind:value={location}
         options={[
@@ -68,11 +68,11 @@
       />
     </div>
     <div>
-    <div class="text-sm font-medium">{t("description_optional")}</div>
+      <div class="text-sm font-medium">{t("description_optional")}</div>
       <textarea
         id="description"
         bind:value={description}
-        class="rounded-lg border border-slate-300 p-2 w-full"
+        class="w-full rounded-lg border border-slate-300 p-2"
         placeholder={t("description_placeholder")}
       ></textarea>
     </div>

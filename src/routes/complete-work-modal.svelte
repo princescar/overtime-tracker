@@ -20,16 +20,16 @@
   let isCompletingWork = $state(false);
 
   const minutesAgo = {
-    read() {
+    read: () => {
       return String(dayjs().startOf("minute").diff(dayjs(endTime).startOf("minute"), "minutes"));
     },
-    write(value: string) {
+    write: (value: string) => {
       const newEndTime = dayjs().startOf("minute").subtract(parseInt(value), "minutes").toDate();
       if (+newEndTime !== +endTime) {
         endTime = newEndTime;
       }
-    }
-  }
+    },
+  };
 
   $effect(() => {
     if (open) {

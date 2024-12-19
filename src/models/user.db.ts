@@ -1,7 +1,7 @@
-import mongoose, { type Document, type Model } from "mongoose";
+import mongoose, { type Document, type Model, type ObjectId } from "mongoose";
 import type { IUser } from "#/types/user";
 
-export interface IUserDocument extends Omit<IUser, "id">, Document {}
+export interface IUserDocument extends Omit<IUser, "id">, Document<ObjectId> {}
 
 const { model, models, Schema } = mongoose;
 
