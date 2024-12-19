@@ -88,6 +88,7 @@ export const deleteCompletedWork = async (worklogId: string) => {
   const index = completedWorks.findIndex((x) => x.id === worklogId);
   if (index > -1) {
     completedWorks.splice(index, 1);
+    totalCompletedWorks -= 1;
   }
 
   await refreshBalance();
