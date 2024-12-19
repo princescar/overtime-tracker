@@ -1,8 +1,9 @@
 FROM node:20-slim AS builder
 RUN corepack enable
-COPY . /app
 WORKDIR /app
+COPY package.json pnpm-lock.yaml /app/
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+COPY . /app
 RUN pnpm build
 
 FROM node:20-slim
