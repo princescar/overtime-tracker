@@ -165,7 +165,7 @@
 </script>
 
 <div class="container mx-auto max-w-[680px] px-4 py-8">
-  <h1 class="font-gray-800 text-center text-3xl font-bold">
+  <h1 class="text-center text-3xl font-bold">
     {t("overtime_tracker")}
   </h1>
 
@@ -233,7 +233,7 @@
   <div class="rounded-lg border border-slate-300 p-4 shadow-sm">
     <div class="flex flex-col gap-4">
       <div class="text-lg font-medium">{t("time_remaining")}</div>
-      <div class={clsx("text-xl font-bold", enoughBalance ? "text-green-500" : "text-red-500")}>
+      <div class={clsx("text-xl font-bold", enoughBalance ? "text-green-700" : "text-red-700")}>
         {durationDisplay(balanceStore.balance)}
       </div>
       {#if !worklogsStore.inProgressWork}
