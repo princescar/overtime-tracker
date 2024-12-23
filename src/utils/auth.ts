@@ -1,4 +1,4 @@
-import { Configuration, discovery, fetchUserInfo, skipSubjectCheck } from "openid-client";
+import { type Configuration, discovery, fetchUserInfo, skipSubjectCheck } from "openid-client";
 import type { RequestEvent } from "@sveltejs/kit";
 import { UserService } from "#/services/user.service";
 import { getRequiredEnvVar } from "./env";
