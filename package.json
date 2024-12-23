@@ -29,6 +29,7 @@
     "globals": "^15.0.0",
     "jiti": "^2.4.1",
     "mongoose": "^8.9.1",
+    "openid-client": "^6.1.7",
     "prettier": "^3.3.2",
     "prettier-plugin-svelte": "^3.2.6",
     "prettier-plugin-tailwindcss": "^0.6.5",

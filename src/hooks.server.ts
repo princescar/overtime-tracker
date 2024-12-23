@@ -1,13 +1,14 @@
 import type { Handle, ServerInit } from "@sveltejs/kit";
 import dotenv from "dotenv";
 import { connectDB } from "#/utils/db";
+import { initAuth, tryGetUserFromRequest } from "#/utils/auth";
 import { detectLanguage } from "#/utils/i18n";
-import { getRequiredEnvVar } from "#/utils/env";
 import { changeLanguage } from "#/stores/messages.svelte";
+import { getRequiredEnvVar } from "./utils/env";
 
 export const init: ServerInit = async () => {
   dotenv.config();
-  await connectDB();
+  await Promise.all([connectDB(), initAuth()]);
 };
 
 // eslint-disable-next-line @typescript-eslint/unbound-method
@@ -19,9 +20,14 @@ export const handle: Handle = async ({ event, resolve }) => {
   );
   await changeLanguage(language);
 
-  // Mock user ID for now
-  const userId = getRequiredEnvVar("MOCK_USER_ID");
-  event.locals.user = { id: userId };
+  // Redirect to login page if not authenticated
+  const user = await tryGetUserFromRequest(event);
+  const requestUrl = new URL(event.request.url);
+  if (!user && !requestUrl.pathname.startsWith("/auth")) {
+    const loginUrl = getRequiredEnvVar("APP_URL") + "/auth/login";
+    return Response.redirect(loginUrl);
+  }
+  event.locals.user = user as { id: string };
 
   const response = await resolve(event, {
     // Set lang attribute in HTML
