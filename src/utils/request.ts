@@ -18,11 +18,13 @@ export const request = async <T>(
     responseBody = (await response.json()) as ApiResponse<T>;
   } catch (error) {
     console.log(error);
-    throw new RequestError("Request failed");
+    throw new RequestError("Request failed", { cause: error });
   }
 
   if (!responseBody.success) {
-    throw new ServerError(responseBody.error.code ?? "UNKNOWN", responseBody.error.message);
+    throw new ServerError(responseBody.error.code ?? "UNKNOWN", responseBody.error.message, {
+      cause: responseBody,
+    });
   }
 
   return responseBody.data;
@@ -30,16 +32,16 @@ export const request = async <T>(
 
 class RequestError extends Error {
   code = "REQUEST_ERROR";
-  constructor(message: string) {
-    super(message);
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
     this.name = "RequestError";
   }
 }
 
 class ServerError extends Error {
   code: string;
-  constructor(code: string, message: string) {
-    super(message);
+  constructor(code: string, message: string, options?: ErrorOptions) {
+    super(message, options);
     this.name = "ServerError";
     this.code = code;
   }

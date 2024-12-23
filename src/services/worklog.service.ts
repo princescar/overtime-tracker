@@ -463,8 +463,8 @@ enum WorklogErrorCode {
 class WorklogError extends Error {
   code: WorklogErrorCode;
 
-  constructor(code: WorklogErrorCode, message: string) {
-    super(message);
+  constructor(code: WorklogErrorCode, message: string, options?: ErrorOptions) {
+    super(message, options);
     this.name = "WorklogError";
     this.code = code;
   }
