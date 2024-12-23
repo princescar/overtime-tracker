@@ -19,19 +19,14 @@ export const worklogsStore = $state({
     return inProgressWork;
   },
   get completedWorksByWeek() {
-    return [...this.completedWorks]
-      .sort((a, b) => +b.startTime - +a.startTime)
-      .reduce<Record<string, IWorklog[]>>((acc, worklog) => {
+    return Object.groupBy(
+      this.completedWorks.toSorted((a, b) => +b.startTime - +a.startTime),
+      (worklog) => {
         const startTime = new Date(worklog.startTime);
         const weekStart = dayjs(startTime).startOf("week");
-        const weekKey = weekStart.toISOString();
-
-        if (typeof acc[weekKey] === "undefined") {
-          acc[weekKey] = [];
-        }
-        acc[weekKey].push(worklog);
-        return acc;
-      }, {});
+        return weekStart.toISOString();
+      },
+    );
   },
   get hasMoreCompletedWorks() {
     return this.completedWorks.length < this.totalCompletedWorks;

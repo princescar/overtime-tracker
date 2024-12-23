@@ -417,20 +417,24 @@
   </div>
 {/snippet}
 
-{#snippet weekSectionGroup(weekStartDate: Date, worklogs: IWorklog[])}
-  <div class="flex flex-col gap-2">
-    <div class="flex items-center justify-between">
-      <span class="text-sm font-medium text-gray-500">
-        {t("week_of", { date: weekStartDate })}
-      </span>
-      <span class="text-sm text-gray-500">
-        {t("duration_in_total", { duration: durationDisplay(calculateTotalMinutes(...worklogs)) })}
-      </span>
+{#snippet weekSectionGroup(weekStartDate: Date, worklogs?: IWorklog[])}
+  {#if worklogs && worklogs.length > 0}
+    <div class="flex flex-col gap-2">
+      <div class="flex items-center justify-between">
+        <span class="text-sm font-medium text-gray-500">
+          {t("week_of", { date: weekStartDate })}
+        </span>
+        <span class="text-sm text-gray-500">
+          {t("duration_in_total", {
+            duration: durationDisplay(calculateTotalMinutes(...worklogs)),
+          })}
+        </span>
+      </div>
+      <div class="flex flex-col gap-4">
+        {#each worklogs as worklog (worklog.id)}
+          {@render completedWorkCard(worklog)}
+        {/each}
+      </div>
     </div>
-    <div class="flex flex-col gap-4">
-      {#each worklogs as worklog (worklog.id)}
-        {@render completedWorkCard(worklog)}
-      {/each}
-    </div>
-  </div>
+  {/if}
 {/snippet}
