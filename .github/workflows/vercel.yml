@@ -24,6 +24,11 @@ jobs:
 
       - run: pnpm build:vercel
 
+      - name: add crons to vercel configuration
+        run: |
+          jq '.crons = [{"path": "/api/cron", "schedule": "0 16 * * 5"}]' .vercel/output/config.json > temp.json
+          mv temp.json .vercel/output/config.json
+
       - uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}

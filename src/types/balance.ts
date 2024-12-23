@@ -1,6 +1,7 @@
 export enum BalanceChangeType {
   WORKLOG = "WORKLOG",
   MANUAL = "MANUAL",
+  CRON = "CRON",
 }
 
 export interface IBalanceHistory {

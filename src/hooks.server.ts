@@ -22,8 +22,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 
   // Redirect to login page if not authenticated
   const user = await tryGetUserFromRequest(event);
-  const requestUrl = new URL(event.request.url);
-  if (!user && !requestUrl.pathname.startsWith("/auth")) {
+  const { pathname } = new URL(event.request.url);
+  if (!user && !(pathname.startsWith("/auth") || pathname === "/api/cron")) {
     const loginUrl = getRequiredEnvVar("APP_URL") + "/auth/login";
     return Response.redirect(loginUrl);
   }

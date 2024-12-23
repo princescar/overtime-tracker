@@ -3,6 +3,14 @@ import type { IUser } from "#/types/user";
 
 export class UserService {
   /**
+   * Get all users
+   */
+  async getAllUsers(): Promise<IUser[]> {
+    const users = await User.find({ deleted: { $ne: true } });
+    return users.map((user) => this.toUser(user));
+  }
+
+  /**
    * Get user by OIDC ID
    */
   async getUserByOidcId(oidcId: string): Promise<IUser> {
