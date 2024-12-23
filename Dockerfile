@@ -6,7 +6,7 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 COPY . /app
 RUN pnpm build
 
-FROM node:20-slim
+FROM gcr.io/distroless/nodejs20-debian12
 WORKDIR /app
 COPY --from=builder /app/build /app/build
 RUN echo '{ "type": "module" }' > /app/build/package.json
