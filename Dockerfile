@@ -1,4 +1,4 @@
-FROM node:20-slim AS builder
+FROM node:22-slim AS builder
 RUN corepack enable
 WORKDIR /app
 COPY package.json pnpm-lock.yaml /app/
@@ -7,7 +7,7 @@ COPY . /app
 RUN pnpm build
 RUN echo '{ "type": "module" }' > /app/build/package.json
 
-FROM gcr.io/distroless/nodejs20-debian12
+FROM gcr.io/distroless/nodejs22-debian12
 WORKDIR /app
 COPY --from=builder /app/build /app/build
 EXPOSE 3000
