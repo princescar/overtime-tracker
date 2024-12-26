@@ -1,18 +1,24 @@
 import { request } from "#/utils/request";
 
-let balance = $state(0);
+class BalanceStore {
+  #balance = $state(0);
 
-export const balanceStore = {
   get balance() {
-    return balance;
-  },
-};
+    return this.#balance;
+  }
 
-export const initBalanceStore = (initialBalance: number) => {
-  balance = initialBalance;
-};
+  get shouldWarn() {
+    return this.#balance < 9 * 60; // Less than 9 hours
+  }
 
-export const refreshBalance = async () => {
-  const { balance: refreshedBalance } = await request<{ balance: number }>("/api/balance", "GET");
-  balance = refreshedBalance;
-};
+  init(initialBalance: number) {
+    this.#balance = initialBalance;
+  }
+
+  async refresh() {
+    const { balance: newBalance } = await request<{ balance: number }>("/api/balance", "GET");
+    this.#balance = newBalance;
+  }
+}
+
+export const balanceStore = new BalanceStore();

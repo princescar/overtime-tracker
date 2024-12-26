@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
-  import { language, t, changeLanguage } from "#/stores/messages.svelte";
+  import { t, i18nStore } from "#/stores/i18n.svelte";
   import Button from "#/components/button.svelte";
   import Toasts from "#/components/toasts.svelte";
   import { request } from "#/utils/request";
@@ -13,9 +13,9 @@
   const onSwitchLanguage = async () => {
     isSwitchingLanguage = true;
     try {
-      const newLanguage = language() === "en" ? "zh" : "en";
+      const newLanguage = i18nStore.language === "en" ? "zh" : "en";
       void request("/api/preferences/language", "PUT", { language: newLanguage });
-      await changeLanguage(newLanguage);
+      await i18nStore.load(newLanguage);
     } finally {
       isSwitchingLanguage = false;
     }

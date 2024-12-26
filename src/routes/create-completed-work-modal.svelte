@@ -1,13 +1,13 @@
 <script lang="ts">
   import dayjs from "dayjs";
-  import { t } from "#/stores/messages.svelte";
+  import { t } from "#/stores/i18n.svelte";
   import { WorkLocation } from "#/types/worklog";
   import Modal from "#/components/modal.svelte";
   import Button from "#/components/button.svelte";
   import ToggleGroup from "#/components/toggle-group.svelte";
   import DateTimeInput from "#/components/date-time-input.svelte";
-  import { createCompletedWork } from "#/stores/worklogs.svelte";
-  import { toastError } from "#/stores/toasts.svelte";
+  import { worklogStore } from "#/stores/worklog.svelte";
+  import { toastStore } from "#/stores/toast.svelte";
 
   let { open = $bindable() } = $props();
 
@@ -29,7 +29,7 @@
   const onCreate = async () => {
     isCreating = true;
     try {
-      await createCompletedWork({
+      await worklogStore.createCompleted({
         startTime: dayjs(startTime).startOf("minute").toDate(),
         endTime: dayjs(endTime).startOf("minute").toDate(),
         location,
@@ -38,7 +38,7 @@
       open = false;
     } catch (error) {
       console.error(error);
-      toastError(error);
+      toastStore.error(error);
     } finally {
       isCreating = false;
     }

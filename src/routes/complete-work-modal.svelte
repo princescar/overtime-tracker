@@ -1,20 +1,18 @@
 <script lang="ts">
   import dayjs from "dayjs";
-  import { t } from "#/stores/messages.svelte";
-  import { type IWorklog } from "#/types/worklog";
+  import { t } from "#/stores/i18n.svelte";
   import Modal from "#/components/modal.svelte";
   import Button from "#/components/button.svelte";
   import ToggleGroup from "#/components/toggle-group.svelte";
   import DateTimeInput from "#/components/date-time-input.svelte";
-  import { completeInProgressWork } from "#/stores/worklogs.svelte";
-  import { toastError } from "#/stores/toasts.svelte";
+  import { worklogStore } from "#/stores/worklog.svelte";
+  import { toastStore } from "#/stores/toast.svelte";
 
   interface CompleteWorkModalProps {
     open?: boolean;
-    inProgressWork?: IWorklog;
   }
 
-  let { open = $bindable(), inProgressWork }: CompleteWorkModalProps = $props();
+  let { open = $bindable() }: CompleteWorkModalProps = $props();
 
   let endTime = $state(new Date());
   let isCompletingWork = $state(false);
@@ -38,14 +36,13 @@
   });
 
   const onCompleteWork = async () => {
-    if (!inProgressWork) return;
     isCompletingWork = true;
     try {
-      await completeInProgressWork(inProgressWork.id, dayjs(endTime).startOf("minute").toDate());
+      await worklogStore.markInProgressAsComplete(dayjs(endTime).startOf("minute").toDate());
       open = false;
     } catch (error) {
       console.error(error);
-      toastError(error);
+      toastStore.error(error);
     } finally {
       isCompletingWork = false;
     }

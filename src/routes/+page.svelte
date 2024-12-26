@@ -1,19 +1,12 @@
 <script lang="ts">
   import dayjs from "dayjs";
   import clsx from "clsx";
-  import { t } from "#/stores/messages.svelte";
+  import { t } from "#/stores/i18n.svelte";
   import { WorkLocation, type IWorklog } from "#/types/worklog";
   import Button from "#/components/button.svelte";
-  import {
-    worklogsStore,
-    loadMoreCompletedWorks,
-    createInProgressWork,
-    cancelInProgressWork,
-    modifyInProgressWork,
-    deleteCompletedWork,
-  } from "#/stores/worklogs.svelte";
+  import { worklogStore } from "#/stores/worklog.svelte";
   import { balanceStore } from "#/stores/balance.svelte";
-  import { toastError } from "#/stores/toasts.svelte";
+  import { toastStore } from "#/stores/toast.svelte";
   import CompleteWorkModal from "./complete-work-modal.svelte";
   import CreateCompletedWorkModal from "./create-completed-work-modal.svelte";
   import DateTimeInput from "#/components/date-time-input.svelte";
@@ -70,19 +63,19 @@
   const onStartNewWork = async () => {
     isStartingNewWork = true;
     try {
-      await createInProgressWork({
+      await worklogStore.createInProgress({
         startTime: dayjs().startOf("minute").toDate(),
         location: WorkLocation.HOME,
       });
     } catch (error) {
       console.error(error);
-      toastError(error);
+      toastStore.error(error);
     } finally {
       isStartingNewWork = false;
     }
   };
 
-  const onCancelWork = async (id: string) => {
+  const onCancelWork = async () => {
     try {
       await confirmDialog?.promptConfirm(t("confirm_to_cancel_work"), t("cancel"));
     } catch {
@@ -91,57 +84,55 @@
 
     isCancelingWork = true;
     try {
-      await cancelInProgressWork(id);
+      await worklogStore.cancelInProgress();
     } catch (error) {
       console.error(error);
-      toastError(error);
+      toastStore.error(error);
     } finally {
       isCancelingWork = false;
     }
   };
 
   const onChangeLocation = async (newLocation: WorkLocation) => {
-    if (!worklogsStore.inProgressWork) return;
-    const oldLocation = worklogsStore.inProgressWork.location;
-    worklogsStore.inProgressWork.location = newLocation;
+    if (!worklogStore.inProgressItem) return;
+    const oldLocation = worklogStore.inProgressItem.location;
+    worklogStore.inProgressItem.location = newLocation;
     isEditingLocation = false;
     try {
-      await modifyInProgressWork(worklogsStore.inProgressWork.id, { location: newLocation });
+      await worklogStore.modifyInProgress({ location: newLocation });
     } catch (error) {
       console.error(error);
-      toastError(error);
-      worklogsStore.inProgressWork.location = oldLocation;
+      toastStore.error(error);
+      worklogStore.inProgressItem.location = oldLocation;
     }
   };
 
   const onChangeDescription = async (newDescription: string) => {
-    if (!worklogsStore.inProgressWork) return;
-    const oldDescription = worklogsStore.inProgressWork.description;
+    if (!worklogStore.inProgressItem) return;
+    const oldDescription = worklogStore.inProgressItem.description;
     newDescription = newDescription.trim();
-    worklogsStore.inProgressWork.description = newDescription;
+    worklogStore.inProgressItem.description = newDescription;
     isEditingDescription = false;
     try {
-      await modifyInProgressWork(worklogsStore.inProgressWork.id, {
-        description: newDescription || null, // Set to null to clear the value if it's blank
-      });
+      await worklogStore.modifyInProgress({ description: newDescription || null });
     } catch (error) {
       console.error(error);
-      toastError(error);
-      worklogsStore.inProgressWork.description = oldDescription;
+      toastStore.error(error);
+      worklogStore.inProgressItem.description = oldDescription;
     }
   };
 
   const onChangeStartTime = async (newStartTime?: Date | null) => {
-    if (!worklogsStore.inProgressWork || !newStartTime) return;
-    const oldStartTime = worklogsStore.inProgressWork.startTime;
-    worklogsStore.inProgressWork.startTime = newStartTime;
+    if (!worklogStore.inProgressItem || !newStartTime) return;
+    const oldStartTime = worklogStore.inProgressItem.startTime;
+    worklogStore.inProgressItem.startTime = newStartTime;
     isEditingStartTime = false;
     try {
-      await modifyInProgressWork(worklogsStore.inProgressWork.id, { startTime: newStartTime });
+      await worklogStore.modifyInProgress({ startTime: newStartTime });
     } catch (error) {
       console.error(error);
-      toastError(error);
-      worklogsStore.inProgressWork.startTime = oldStartTime;
+      toastStore.error(error);
+      worklogStore.inProgressItem.startTime = oldStartTime;
     }
   };
 
@@ -154,10 +145,10 @@
 
     deletingWorklogId = id;
     try {
-      await deleteCompletedWork(id);
+      await worklogStore.deleteCompleted(id);
     } catch (error) {
       console.error(error);
-      toastError(error);
+      toastStore.error(error);
     } finally {
       deletingWorklogId = undefined;
     }
@@ -172,15 +163,15 @@
   <div class="mt-8 flex flex-col gap-4">
     {@render balanceCard()}
 
-    {#if worklogsStore.inProgressWork}
-      {@render inProgressWorkCard(worklogsStore.inProgressWork)}
+    {#if worklogStore.inProgressItem}
+      {@render inProgressWorkCard(worklogStore.inProgressItem)}
     {/if}
 
     <div class="mt-8 flex flex-col gap-4">
       <h2 class="text-2xl font-bold">{t("recent_worklogs")}</h2>
-      {#if Object.entries(worklogsStore.completedWorksByWeek).length > 0}
+      {#if Object.entries(worklogStore.completedItemsByWeek).length > 0}
         <div class="flex flex-col gap-4">
-          {#each Object.entries(worklogsStore.completedWorksByWeek) as [weekKey, worklogsInWeek] (weekKey)}
+          {#each Object.entries(worklogStore.completedItemsByWeek) as [weekKey, worklogsInWeek] (weekKey)}
             {@render weekSectionGroup(new Date(weekKey), worklogsInWeek)}
           {/each}
         </div>
@@ -196,9 +187,12 @@
             class="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600"
           ></div>
         </div>
-      {:else if worklogsStore.hasMoreCompletedWorks}
+      {:else if worklogStore.hasMoreCompleted}
         <div class="flex justify-center">
-          <button class="cursor-pointer text-blue-500" onclick={loadMoreCompletedWorks}>
+          <button
+            class="cursor-pointer text-blue-500"
+            onclick={() => worklogStore.loadMoreCompleted()}
+          >
             {t("load_more")}
           </button>
         </div>
@@ -207,10 +201,7 @@
   </div>
 </div>
 
-<CompleteWorkModal
-  bind:open={isCompleteWorkModalOpen}
-  inProgressWork={worklogsStore.inProgressWork}
-/>
+<CompleteWorkModal bind:open={isCompleteWorkModalOpen} />
 <CreateCompletedWorkModal bind:open={isCreateCompletedWorkModalOpen} />
 
 <ConfirmDialog bind:this={confirmDialog} />
@@ -235,14 +226,18 @@
 {/snippet}
 
 {#snippet balanceCard()}
-  {@const enoughBalance = balanceStore.balance >= 9 * 60}
   <div class="rounded-lg border border-slate-300 p-4 shadow-sm">
     <div class="flex flex-col gap-4">
       <div class="text-lg font-medium">{t("time_remaining")}</div>
-      <div class={clsx("text-xl font-bold", enoughBalance ? "text-green-700" : "text-red-700")}>
+      <div
+        class={clsx(
+          "text-xl font-bold",
+          balanceStore.shouldWarn ? "text-red-700" : "text-green-700",
+        )}
+      >
         {durationDisplay(balanceStore.balance)}
       </div>
-      {#if !worklogsStore.inProgressWork}
+      {#if !worklogStore.inProgressItem}
         <div class="mt-4 flex gap-4">
           <Button onclick={onStartNewWork} loading={isStartingNewWork}>{t("start_new_work")}</Button
           >
@@ -274,7 +269,7 @@
   </svg>
 {/snippet}
 
-{#snippet inProgressWorkCard({ id, location, startTime, description }: IWorklog)}
+{#snippet inProgressWorkCard({ location, startTime, description }: IWorklog)}
   <div class="rounded-lg border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
     <div class="flex h-full flex-col gap-3">
       <div class="flex items-start justify-between">
@@ -370,7 +365,7 @@
         >
         <Button
           variant="danger"
-          onclick={() => onCancelWork(id)}
+          onclick={onCancelWork}
           disabled={isEditingLocation || isEditingDescription || isEditingStartTime}
           loading={isCancelingWork}
         >

@@ -2,7 +2,12 @@
   import { createToaster, melt } from "@melt-ui/svelte";
   import { flip } from "svelte/animate";
   import { fly } from "svelte/transition";
-  import { initToastStore, type ToastData } from "#/stores/toasts.svelte";
+  import { toastStore } from "#/stores/toast.svelte";
+
+  interface ToastData {
+    message: string;
+    title?: string;
+  }
 
   const {
     elements: { content, title, description, close },
@@ -11,7 +16,7 @@
     actions: { portal },
   } = createToaster<ToastData>();
 
-  initToastStore(addToast);
+  toastStore.init((message: string, title?: string) => addToast({ data: { message, title } }));
 </script>
 
 <div

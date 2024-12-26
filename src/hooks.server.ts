@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import { connectDB } from "#/utils/db";
 import { initAuth, tryGetUserFromRequest } from "#/utils/auth";
 import { detectLanguage } from "#/utils/i18n";
-import { changeLanguage } from "#/stores/messages.svelte";
+import { i18nStore } from "#/stores/i18n.svelte";
 import { getRequiredEnvVar } from "./utils/env";
 
 export const init: ServerInit = async () => {
@@ -18,7 +18,7 @@ export const handle: Handle = async ({ event, resolve }) => {
     event.request.headers.get("accept-language"),
     event.cookies.get("language"),
   );
-  await changeLanguage(language);
+  await i18nStore.load(language);
 
   // Redirect to login page if not authenticated
   const user = await tryGetUserFromRequest(event);

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { t } from "#/stores/messages.svelte";
+  import { t } from "#/stores/i18n.svelte";
   import Button from "./button.svelte";
   import Modal from "./modal.svelte";
 
