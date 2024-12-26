@@ -29,7 +29,7 @@
       animate:flip={{ duration: 500 }}
       in:fly={{ duration: 150, x: "100%" }}
       out:fly={{ duration: 150, x: "100%" }}
-      class="rounded-lg bg-neutral-100 shadow-md"
+      class="rounded-lg bg-neutral-100 shadow-md dark:bg-gray-800"
     >
       <div
         class="relative flex w-[24rem] max-w-[calc(100vw-2rem)] items-center justify-between gap-4 p-5"
@@ -45,7 +45,7 @@
         </div>
         <button
           use:melt={$close(id)}
-          class="text-magnum-500 hover:bg-magnum-900/50 absolute right-4 top-4 grid size-6 place-items-center rounded-full"
+          class="text-magnum-500 hover:bg-magnum-900/50 absolute right-4 top-4 grid size-6 place-items-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
           aria-labelledby="close"
         >
           <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

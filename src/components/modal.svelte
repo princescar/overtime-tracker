@@ -34,13 +34,13 @@
       use:melt={$overlay}
       in:fade={{ duration }}
       out:fade={{ duration }}
-      class="fixed inset-0 bg-black/50"
+      class="fixed inset-0 bg-black/50 dark:bg-gray-900/75"
     ></div>
     <div
       use:melt={$content}
       in:fade={{ duration }}
       out:fade={{ duration }}
-      class="fixed left-[50%] top-[50%] w-full max-w-sm translate-x-[-50%] translate-y-[-50%] rounded-lg bg-white p-4 shadow-xl"
+      class="fixed left-[50%] top-[50%] w-full max-w-sm translate-x-[-50%] translate-y-[-50%] rounded-lg bg-white p-4 shadow-xl dark:bg-gray-800"
     >
       {#if heading}
         <div use:melt={$title} class="mb-4 text-lg font-medium">{@render heading()}</div>
@@ -55,7 +55,7 @@
   <button
     use:melt={$close}
     aria-label="close"
-    class="absolute right-3.5 top-3.5 cursor-pointer rounded-full p-1 hover:bg-gray-100"
+    class="absolute right-3.5 top-3.5 cursor-pointer rounded-full p-1 hover:bg-gray-100 dark:hover:bg-gray-700"
   >
     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path

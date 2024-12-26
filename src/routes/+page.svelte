@@ -226,7 +226,7 @@
 {/snippet}
 
 {#snippet balanceCard()}
-  <div class="rounded-lg border border-slate-300 p-4 shadow-sm">
+  <div class="rounded-lg border border-slate-300 p-4 shadow-sm dark:border-slate-700">
     <div class="flex flex-col gap-4">
       <div class="text-lg font-medium">{t("time_remaining")}</div>
       <div
@@ -270,7 +270,9 @@
 {/snippet}
 
 {#snippet inProgressWorkCard({ location, startTime, description }: IWorklog)}
-  <div class="rounded-lg border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
+  <div
+    class="rounded-lg border border-emerald-200 bg-emerald-50 p-4 shadow-sm dark:border-emerald-800 dark:bg-emerald-950"
+  >
     <div class="flex h-full flex-col gap-3">
       <div class="flex items-start justify-between">
         {#if isEditingLocation}
@@ -286,7 +288,7 @@
           />
         {:else}
           <button
-            class="group flex items-center gap-2 text-lg font-medium text-blue-500 transition-colors hover:text-blue-600"
+            class="group flex items-center gap-2 text-lg font-medium text-blue-500 hover:text-blue-600"
             onclick={() => (isEditingLocation = true)}
             title={t("click_to_edit")}
           >
@@ -295,7 +297,7 @@
           </button>
         {/if}
         <span
-          class="rounded-full bg-blue-100 px-2 py-1 text-xs font-medium uppercase text-blue-500"
+          class="rounded-full bg-blue-100 px-2 py-1 text-xs font-medium uppercase text-blue-500 dark:bg-blue-900 dark:text-blue-300"
         >
           {t("in_progress")}
         </span>
@@ -319,7 +321,7 @@
         </div>
       {:else}
         <button
-          class="group flex items-center gap-1 self-start text-sm transition-colors hover:text-gray-600"
+          class="group flex items-center gap-1 self-start text-sm hover:text-gray-600"
           class:text-gray-500={!!description}
           class:text-gray-400={!description}
           onclick={() => (isEditingDescription = true)}
@@ -349,7 +351,7 @@
         </div>
       {:else}
         <button
-          class="group flex items-center gap-1 self-start text-sm text-gray-500 transition-colors hover:text-gray-600"
+          class="group flex items-center gap-1 self-start text-sm text-gray-500 hover:text-gray-600"
           onclick={() => (isEditingStartTime = true)}
           title={t("click_to_edit")}
         >
@@ -379,7 +381,7 @@
 
 {#snippet completedWorkCard({ id, location, startTime, endTime, description }: IWorklog)}
   <div
-    class="rounded-lg border border-gray-300 p-4 shadow-sm transition-opacity hover:border-gray-400 hover:bg-gray-100"
+    class="rounded-lg border border-gray-300 p-4 shadow-sm transition-opacity hover:border-gray-400 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800"
     class:opacity-50={deletingWorklogId === id}
     class:pointer-events-none={deletingWorklogId === id}
   >

@@ -51,7 +51,10 @@
 
 <input
   type="datetime-local"
-  class={clsx("w-full rounded-md border border-gray-300 p-2", className)}
+  class={clsx(
+    "w-full rounded-md border border-gray-300 p-2 dark:border-gray-700 dark:bg-gray-800",
+    className,
+  )}
   value={formatForInput(value)}
   onchange={(e) => {
     handleChange(e.currentTarget.value);
