@@ -31,7 +31,7 @@ export const request = async <T>(
 };
 
 class RequestError extends Error {
-  code = "REQUEST_ERROR";
+  code = "NETWORK";
   constructor(message: string, options?: ErrorOptions) {
     super(message, options);
     this.name = "RequestError";
