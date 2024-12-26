@@ -90,7 +90,7 @@ class WorklogStore {
   }
 
   async createCompleted(worklog: Omit<IWorklog, "id" | "userId">) {
-    const created = await request<IWorklog>(`/api/worklogs/completedItems`, "POST", worklog);
+    const created = await request<IWorklog>(`/api/worklogs/completed`, "POST", worklog);
 
     this.#completedItems.unshift(worklogSchema.parse(created));
     this.#totalCompleted += 1;
