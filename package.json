@@ -7,7 +7,17 @@
     "build": "vite build",
     "build:vercel": "VERCEL=true vite build",
     "lint": "eslint src --flag unstable_ts_config",
-    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "src/**/*.{ts,svelte}": [
+      "eslint --flag unstable_ts_config",
+      "svelte-kit sync && svelte-check"
+    ],
+    "src/**/*.css": [
+      "prettier"
+    ]
   },
   "devDependencies": {
     "@eslint/compat": "^1.2.3",
@@ -27,7 +37,9 @@
     "eslint-plugin-prettier": "^5.2.1",
     "eslint-plugin-svelte": "^2.36.0",
     "globals": "^15.14.0",
+    "husky": "^9.1.7",
     "jiti": "^2.4.2",
+    "lint-staged": "^15.2.11",
     "mongoose": "^8.9.2",
     "openid-client": "^6.1.7",
     "prettier": "^3.3.2",
