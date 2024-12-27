@@ -72,7 +72,7 @@
       <textarea
         id="description"
         bind:value={description}
-        class="w-full rounded-lg border border-slate-300 p-2"
+        class="w-full rounded-lg border border-slate-300 p-2 dark:border-slate-700 dark:bg-slate-800"
         placeholder={t("description_placeholder")}
       ></textarea>
     </div>
