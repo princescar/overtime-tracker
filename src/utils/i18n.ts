@@ -1,11 +1,10 @@
 import acceptLanguageParser from "accept-language";
 
-const supportedLanguages = ["en", "zh"]; // TODO: inject in build time
-const defaultLanguage = supportedLanguages[0];
-acceptLanguageParser.languages(supportedLanguages);
+// Wrap it in function as dev server would inject this value after the top level execution sometimes
+const getSupportedLanguages = () => __SUPPORTED_LANGUAGES__;
 
-export const isLanguageSupported = (language?: string | null) =>
-  supportedLanguages.includes(language?.toLowerCase() ?? "");
+export const isLanguageSupported = (language: string) =>
+  getSupportedLanguages().includes(language.toLowerCase());
 
 export const detectLanguage = (
   acceptLanguage?: string | null,
@@ -13,13 +12,12 @@ export const detectLanguage = (
 ): string => {
   let language = preferredLanguage;
 
-  if (!isLanguageSupported(language)) {
+  if (!language || !isLanguageSupported(language)) {
+    const supportedLanguages = getSupportedLanguages();
+    acceptLanguageParser.languages(supportedLanguages);
     language = acceptLanguageParser.get(acceptLanguage);
+    if (!language) language = supportedLanguages[0];
   }
 
-  if (!isLanguageSupported(language)) {
-    language = defaultLanguage;
-  }
-
-  return language ?? defaultLanguage;
+  return language;
 };

@@ -12,6 +12,9 @@ const supportedLanguages = readdirSync(messagesFolder)
   .map((file) => file.replace(/\.yaml$/, ""));
 
 export default defineConfig({
+  define: {
+    __SUPPORTED_LANGUAGES__: supportedLanguages, // Inject supported languages in build time
+  },
   plugins: [
     messageformat({
       include: fileURLToPath(new URL("*.yaml", messagesFolder)),
