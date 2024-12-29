@@ -13,15 +13,12 @@ export class UserService {
   /**
    * Get user by OIDC ID
    */
-  async getUserByOidcId(oidcId: string): Promise<IUser> {
+  async getUserByOidcId(oidcId: string): Promise<IUser | null> {
     const user = await User.findOne({
       oidcId,
       deleted: { $ne: true },
     });
-    if (!user) {
-      throw new Error(`Cannot find user with OIDC ID ${oidcId}`);
-    }
-    return this.toUser(user);
+    return user ? this.toUser(user) : null;
   }
 
   /**
