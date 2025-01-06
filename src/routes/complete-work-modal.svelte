@@ -1,5 +1,6 @@
 <script lang="ts">
   import dayjs from "dayjs";
+  import { Label } from "flowbite-svelte";
   import { t } from "#/stores/i18n.svelte";
   import Modal from "#/components/modal.svelte";
   import Button from "#/components/button.svelte";
@@ -49,11 +50,15 @@
   };
 </script>
 
-<Modal bind:open>
-  {#snippet heading()}{t("mark_complete")}{/snippet}
+<Modal title={t("mark_as_complete")} bind:open>
+  {#snippet footer()}
+    <div class="flex justify-end gap-4">
+      <Button onclick={onCompleteWork} loading={isCompletingWork}>{t("complete")}</Button>
+    </div>
+  {/snippet}
   <div class="flex flex-col gap-4">
-    <div>
-      <div class="text-sm font-medium">{t("end_time")}</div>
+    <Label class="flex flex-col gap-1">
+      <span>{t("end_time")}</span>
       <ToggleGroup
         bind:value={minutesAgo.read, minutesAgo.write}
         options={[
@@ -62,10 +67,7 @@
           { value: "15", label: t("minutes_ago", { count: 15 }) },
         ]}
       />
-      <DateTimeInput id="endTime" class="mt-2" bind:value={endTime} />
-    </div>
-    <div class="flex justify-end gap-4">
-      <Button onclick={onCompleteWork} loading={isCompletingWork}>{t("complete")}</Button>
-    </div>
+      <DateTimeInput bind:value={endTime} />
+    </Label>
   </div>
 </Modal>

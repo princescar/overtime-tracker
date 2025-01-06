@@ -1,7 +1,7 @@
 <script lang="ts">
-  import type { HTMLAttributes } from "svelte/elements";
+  import { Button, Spinner, type ButtonColorType } from "flowbite-svelte";
   import clsx from "clsx";
-  import Spinner from "./spinner.svelte";
+  import type { HTMLButtonAttributes } from "svelte/elements";
   import type { Snippet } from "svelte";
 
   interface ButtonProps {
@@ -12,20 +12,15 @@
     children: Snippet;
   }
 
-  const baseButtonStyles =
-    "px-4 py-2 rounded-md font-medium cursor-pointer flex items-center justify-center gap-2";
-  const compactButtonStyles =
-    "px-1 py-0.5 rounded-md text-sm cursor-pointer flex items-center justify-center gap-1";
-  const buttonVariants = {
-    default: "bg-emerald-700 text-white hover:bg-emerald-800 dark:hover:bg-emerald-600",
-    light:
-      "bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600",
-    subtle:
-      "text-gray-800 hover:bg-gray-200/50 dark:text-gray-300 dark:hover:text-gray-200 dark:hover:bg-gray-600/25",
-    filled:
-      "bg-emerald-100 text-emerald-900 hover:bg-emerald-200 dark:bg-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-700",
-    danger:
-      "text-red-700 hover:bg-red-100 hover:text-red-800 dark:hover:bg-red-100/10 dark:hover:text-red-500",
+  const buttonVariants: Record<string, { color?: ButtonColorType; class?: string }> = {
+    default: {},
+    light: { color: "alternative" },
+    subtle: {
+      color: "light",
+      class:
+        "border-transparent bg-transparent dark:border-transparent dark:bg-transparent dark:hover:border-transparent",
+    },
+    danger: { color: "light", class: "text-red-600 hover:text-red-700" },
   };
 
   const {
@@ -36,19 +31,16 @@
     children,
     class: className,
     ...props
-  }: ButtonProps & HTMLAttributes<HTMLButtonElement> = $props();
+  }: ButtonProps & HTMLButtonAttributes = $props();
 </script>
 
-<button
-  class={clsx(
-    className,
-    compact ? compactButtonStyles : baseButtonStyles,
-    buttonVariants[variant],
-    (!!loading || !!disabled) && "pointer-events-none opacity-75 dark:opacity-50",
-  )}
+<Button
   {...props}
+  class={clsx(buttonVariants[variant].class, { "py-1": compact }, className)}
+  size={compact ? "xs" : "md"}
+  color={buttonVariants[variant].color}
   disabled={!!disabled || !!loading}
 >
   {#if loading}<Spinner />{/if}
   {@render children()}
-</button>
+</Button>

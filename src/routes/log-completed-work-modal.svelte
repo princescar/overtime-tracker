@@ -1,5 +1,6 @@
 <script lang="ts">
   import dayjs from "dayjs";
+  import { Label } from "flowbite-svelte";
   import { t } from "#/stores/i18n.svelte";
   import { WorkLocation } from "#/types/worklog";
   import Modal from "#/components/modal.svelte";
@@ -45,19 +46,21 @@
   };
 </script>
 
-<Modal bind:open>
-  {#snippet heading()}{t("start_work")}{/snippet}
+<Modal title={t("log_completed_work")} bind:open>
+  {#snippet footer()}
+    <Button onclick={onCreate} loading={isCreating}>{t("log_work")}</Button>
+  {/snippet}
   <div class="flex flex-col gap-4">
-    <div>
-      <div class="text-sm font-medium">{t("start_time")}</div>
-      <DateTimeInput id="startTime" bind:value={startTime} />
-    </div>
-    <div>
-      <div class="text-sm font-medium">{t("end_time")}</div>
-      <DateTimeInput id="startTime" bind:value={endTime} />
-    </div>
-    <div>
-      <div class="text-sm font-medium">{t("location")}</div>
+    <Label class="flex flex-col gap-1">
+      <span>{t("start_time")}</span>
+      <DateTimeInput bind:value={startTime} />
+    </Label>
+    <Label class="flex flex-col gap-1">
+      <span>{t("end_time")}</span>
+      <DateTimeInput bind:value={endTime} />
+    </Label>
+    <Label class="flex flex-col gap-1">
+      <span>{t("location")}</span>
       <ToggleGroup
         bind:value={location}
         options={[
@@ -66,18 +69,14 @@
           { value: WorkLocation.BUSINESS_TRIP, label: t("business_trip") },
         ]}
       />
-    </div>
-    <div>
-      <div class="text-sm font-medium">{t("description_optional")}</div>
+    </Label>
+    <Label class="flex flex-col gap-1">
+      <span>{t("description_optional")}</span>
       <textarea
-        id="description"
         bind:value={description}
         class="w-full rounded-lg border border-slate-300 p-2 dark:border-slate-700 dark:bg-slate-800"
         placeholder={t("description_placeholder")}
       ></textarea>
-    </div>
-    <div class="flex justify-end gap-4">
-      <Button onclick={onCreate} loading={isCreating}>{t("log_work")}</Button>
-    </div>
+    </Label>
   </div>
 </Modal>

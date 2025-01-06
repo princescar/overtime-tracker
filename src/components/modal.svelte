@@ -1,69 +1,34 @@
 <script lang="ts">
-  import type { Snippet } from "svelte";
+  import { Modal } from "flowbite-svelte";
+  import type { ModalProps as FlowbiteModalProps } from "flowbite-svelte/Modal.svelte";
   import { fade } from "svelte/transition";
-  import { createDialog, melt } from "@melt-ui/svelte";
+  import type { Snippet } from "svelte";
 
   interface ModalProps {
     open?: boolean;
-    heading?: Snippet;
     children: Snippet;
+    footer?: Snippet;
   }
 
-  let { open = $bindable(), heading, children }: ModalProps = $props();
-
-  const {
-    elements: { overlay, content, title, close, portalled },
-    states: { open: stateOpen },
-  } = createDialog({
-    defaultOpen: open,
-  });
-
-  // Sync states
-  $effect(() => {
-    $stateOpen = open ?? false;
-  });
-  $effect(() => {
-    open = $stateOpen;
-  });
-  const duration = 150;
+  let {
+    open = $bindable(),
+    children,
+    footer: _footer,
+    ...props
+  }: ModalProps & FlowbiteModalProps = $props();
 </script>
 
-{#if $stateOpen}
-  <div use:melt={$portalled}>
-    <div
-      use:melt={$overlay}
-      in:fade={{ duration }}
-      out:fade={{ duration }}
-      class="fixed inset-0 bg-black/50 dark:bg-gray-900/75"
-    ></div>
-    <div
-      use:melt={$content}
-      in:fade={{ duration }}
-      out:fade={{ duration }}
-      class="fixed left-[50%] top-[50%] w-full max-w-sm translate-x-[-50%] translate-y-[-50%] rounded-lg bg-white p-4 shadow-xl dark:bg-gray-800"
-    >
-      {#if heading}
-        <div use:melt={$title} class="mb-4 text-lg font-medium">{@render heading()}</div>
-      {/if}
+{#if open}
+  <div transition:fade={{ duration: 150 }}>
+    <Modal bind:open size="xs" classHeader="py-3 md:py-3 text-gray-900" {...props}>
       {@render children()}
-      {@render closeButton()}
-    </div>
+      {@render (_footer ? footer : undefined)?.()}
+    </Modal>
   </div>
 {/if}
 
-{#snippet closeButton()}
-  <button
-    use:melt={$close}
-    aria-label="close"
-    class="absolute right-3.5 top-3.5 cursor-pointer rounded-full p-1 hover:bg-gray-100 dark:hover:bg-gray-700"
-  >
-    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        stroke-width="2"
-        d="M6 18L18 6M6 6l12 12"
-      />
-    </svg>
-  </button>
+{#snippet footer()}
+  <div class="flex justify-end gap-4">
+    {@render _footer?.()}
+  </div>
 {/snippet}

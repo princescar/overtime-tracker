@@ -1,14 +1,15 @@
 <script lang="ts">
   import dayjs from "dayjs";
   import clsx from "clsx";
+  import { EditOutline } from "flowbite-svelte-icons";
   import { t } from "#/stores/i18n.svelte";
   import { WorkLocation, type IWorklog } from "#/types/worklog";
-  import Button from "#/components/button.svelte";
   import { worklogStore } from "#/stores/worklog.svelte";
   import { balanceStore } from "#/stores/balance.svelte";
   import { toastStore } from "#/stores/toast.svelte";
   import CompleteWorkModal from "./complete-work-modal.svelte";
-  import CreateCompletedWorkModal from "./create-completed-work-modal.svelte";
+  import LogCompletedWorkModal from "./log-completed-work-modal.svelte";
+  import Button from "#/components/button.svelte";
   import DateTimeInput from "#/components/date-time-input.svelte";
   import ToggleGroup from "#/components/toggle-group.svelte";
   import ConfirmDialog from "#/components/confirm-dialog.svelte";
@@ -21,7 +22,7 @@
     isEditingDescription = $state(false),
     isEditingStartTime = $state(false),
     isCompleteWorkModalOpen = $state(false),
-    isCreateCompletedWorkModalOpen = $state(false),
+    isLogCompletedWorkModalOpen = $state(false),
     deletingWorklogId = $state<string>();
 
   // Refs
@@ -184,13 +185,13 @@
       {#if loading}
         <div class="flex justify-center">
           <div
-            class="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600"
+            class="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-primary-600"
           ></div>
         </div>
       {:else if worklogStore.hasMoreCompleted}
         <div class="flex justify-center">
           <button
-            class="cursor-pointer text-blue-500"
+            class="cursor-pointer text-primary-500"
             onclick={() => worklogStore.loadMoreCompleted()}
           >
             {t("load_more")}
@@ -202,7 +203,7 @@
 </div>
 
 <CompleteWorkModal bind:open={isCompleteWorkModalOpen} />
-<CreateCompletedWorkModal bind:open={isCreateCompletedWorkModalOpen} />
+<LogCompletedWorkModal bind:open={isLogCompletedWorkModalOpen} />
 
 <ConfirmDialog bind:this={confirmDialog} />
 
@@ -241,7 +242,7 @@
         <div class="mt-4 flex gap-4">
           <Button onclick={onStartNewWork} loading={isStartingNewWork}>{t("start_new_work")}</Button
           >
-          <Button variant="light" onclick={() => (isCreateCompletedWorkModalOpen = true)}>
+          <Button variant="light" onclick={() => (isLogCompletedWorkModalOpen = true)}>
             {t("log_completed_work")}
           </Button>
         </div>
@@ -250,28 +251,9 @@
   </div>
 {/snippet}
 
-{#snippet editIcon()}
-  <svg class="hidden group-hover:block" viewBox="0 0 24 24" width="16" height="16" fill="none">
-    <path
-      d="M21.2799 6.40005L11.7399 15.94C10.7899 16.89 7.96987 17.33 7.33987 16.7C6.70987 16.07 7.13987 13.25 8.08987 12.3L17.6399 2.75002C17.8754 2.49308 18.1605 2.28654 18.4781 2.14284C18.7956 1.99914 19.139 1.92124 19.4875 1.9139C19.8359 1.90657 20.1823 1.96991 20.5056 2.10012C20.8289 2.23033 21.1225 2.42473 21.3686 2.67153C21.6147 2.91833 21.8083 3.21243 21.9376 3.53609C22.0669 3.85976 22.1294 4.20626 22.1211 4.55471C22.1128 4.90316 22.0339 5.24635 21.8894 5.5635C21.7448 5.88065 21.5375 6.16524 21.2799 6.40005V6.40005Z"
-      stroke="currentColor"
-      stroke-width="1.5"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    />
-    <path
-      d="M11 4H6C4.93913 4 3.92178 4.42142 3.17163 5.17157C2.42149 5.92172 2 6.93913 2 8V18C2 19.0609 2.42149 20.0783 3.17163 20.8284C3.92178 21.5786 4.93913 22 6 22H17C19.21 22 20 20.2 20 18V13"
-      stroke="currentColor"
-      stroke-width="1.5"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    />
-  </svg>
-{/snippet}
-
 {#snippet inProgressWorkCard({ location, startTime, description }: IWorklog)}
   <div
-    class="rounded-lg border border-emerald-200 bg-emerald-50 p-4 shadow-sm dark:border-emerald-800 dark:bg-emerald-950"
+    class="rounded-lg border border-primary-200 bg-primary-50 p-4 shadow-sm dark:border-primary-800 dark:bg-primary-950"
   >
     <div class="flex h-full flex-col gap-3">
       <div class="flex items-start justify-between">
@@ -288,16 +270,16 @@
           />
         {:else}
           <button
-            class="group flex items-center gap-2 text-lg font-medium text-blue-500 hover:text-blue-600"
+            class="group flex items-center gap-2 text-lg font-medium text-primary-800 hover:text-primary-900"
             onclick={() => (isEditingLocation = true)}
             title={t("click_to_edit")}
           >
             {@render workSummary(location, startTime)}
-            {@render editIcon()}
+            <EditOutline class="hidden group-hover:block" />
           </button>
         {/if}
         <span
-          class="rounded-full bg-blue-100 px-2 py-1 text-xs font-medium uppercase text-blue-500 dark:bg-blue-900 dark:text-blue-300"
+          class="rounded-full bg-primary-100 px-2 py-1 text-xs font-medium uppercase text-primary-500 dark:bg-primary-900 dark:text-primary-300"
         >
           {t("in_progress")}
         </span>
@@ -308,13 +290,12 @@
           <input class="p-2 text-sm" bind:this={descriptionInput} value={description} autofocus />
           <div class="flex gap-2 self-start">
             <Button
-              variant="default"
-              class="text-sm"
+              compact
               onclick={() => descriptionInput && onChangeDescription(descriptionInput.value)}
             >
               {t("save")}
             </Button>
-            <Button variant="subtle" class="text-sm" onclick={() => (isEditingDescription = false)}>
+            <Button variant="subtle" compact onclick={() => (isEditingDescription = false)}>
               {t("cancel")}
             </Button>
           </div>
@@ -330,7 +311,7 @@
           {description == null || description.length === 0
             ? t("description_placeholder")
             : description}
-          {@render editIcon()}
+          <EditOutline class="hidden group-hover:block" />
         </button>
       {/if}
       {#if isEditingStartTime}
@@ -338,13 +319,12 @@
           <DateTimeInput bind:this={startTimeInput} value={startTime} autofocus />
           <div class="flex gap-2 self-start">
             <Button
-              variant="default"
-              class="text-sm"
+              compact
               onclick={() => startTimeInput && onChangeStartTime(startTimeInput.getValue())}
             >
               {t("save")}
             </Button>
-            <Button variant="subtle" class="text-sm" onclick={() => (isEditingStartTime = false)}>
+            <Button variant="subtle" compact onclick={() => (isEditingStartTime = false)}>
               {t("cancel")}
             </Button>
           </div>
@@ -356,7 +336,7 @@
           title={t("click_to_edit")}
         >
           {@render timeRange(startTime)}
-          {@render editIcon()}
+          <EditOutline class="hidden group-hover:block" />
         </button>
       {/if}
       <div class="mt-5 flex gap-4">

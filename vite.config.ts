@@ -27,7 +27,7 @@ export default defineConfig({
   },
   css: {
     postcss: {
-      plugins: [tailwindcss({ content: ["./src/**/*.{html,svelte,ts}"] }), autoprefixer],
+      plugins: [tailwindcss, autoprefixer],
     },
   },
 });

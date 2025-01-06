@@ -1,23 +1,37 @@
 import { t } from "./i18n.svelte";
 
-type Toaster = (message: string, title?: string) => void;
+interface Toast {
+  type: "success" | "error";
+  message: string;
+}
+
+const TOAST_DURATION = 3000;
 
 class ToastStore {
-  #toaster = $state<Toaster>();
+  #toasts: [string, Toast][] = $state([]);
 
-  init(toaster: Toaster) {
-    this.#toaster = toaster;
+  get toasts() {
+    return this.#toasts;
   }
 
-  toast(message: string, title?: string) {
-    if (!this.#toaster) {
-      throw new Error("Toasts store is not initialized");
+  toast(message: string, type: Toast["type"]) {
+    const id = Date.now().toString();
+    this.#toasts.push([id, { type, message }]);
+    setTimeout(() => {
+      this.removeToast(id);
+    }, TOAST_DURATION);
+    return id;
+  }
+
+  removeToast(toastId: string) {
+    const index = this.#toasts.findIndex(([id]) => id === toastId);
+    if (index > -1) {
+      this.#toasts.splice(index, 1);
     }
-    this.#toaster(message, title);
   }
 
   success(message: string) {
-    this.toast(message, t("success"));
+    return this.toast(message, "success");
   }
 
   error(error: unknown) {
@@ -31,7 +45,7 @@ class ToastStore {
       message = messageFromErrorCode ?? error.message;
     }
 
-    this.toast(message, t("error"));
+    return this.toast(message, "error");
   }
 }
 

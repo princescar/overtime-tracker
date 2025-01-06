@@ -35,10 +35,11 @@
   });
 </script>
 
-<Modal bind:open>
-  {#snippet heading()}{title}{/snippet}
-  {message}
-  <div class="mt-8 flex justify-end gap-4">
+<Modal {title} bind:open color="red">
+  {#snippet footer()}
     <Button onclick={onConfirm}>{t("confirm")}</Button>
+  {/snippet}
+  <div class="mb-8">
+    {message}
   </div>
 </Modal>
