@@ -7,16 +7,16 @@
   },
   "packageManager": "pnpm@10.6.2",
   "scripts": {
-    "dev": "vite dev",
-    "build": "vite build",
-    "build:vercel": "VERCEL=true vite build",
-    "lint": "eslint src",
+    "dev": "svelte-kit sync && vite dev",
+    "build": "svelte-kit sync && vite build",
+    "build:vercel": "VERCEL=true svelte-kit sync && vite build",
+    "lint": "svelte-kit sync && eslint src",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "prepare": "husky"
   },
   "lint-staged": {
     "src/**/*.{ts,svelte}": [
-      "eslint",
+      "svelte-kit sync && eslint",
       "svelte-kit sync && svelte-check"
     ],
     "src/**/*.css": [
