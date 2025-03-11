@@ -31,7 +31,8 @@
     try {
       return dayjs(date).format("YYYY-MM-DDTHH:mm");
     } catch {
-      return ""; // Handle invalid date objects gracefully
+      // Ignore invalid date
+      console.warn("Invalid date", date);
     }
   };
 
@@ -41,10 +42,13 @@
       return;
     }
     try {
-      value = new Date(dateString);
+      const timestamp = Date.parse(dateString);
+      if (!isNaN(timestamp)) {
+        value = new Date(timestamp);
+      }
     } catch {
-      // Handle invalid date strings gracefully
-      value = null;
+      // Ignore invalid date string
+      console.warn("Invalid date string", dateString);
     }
   };
 </script>
