@@ -27,7 +27,7 @@
 
   // Refs
   let confirmDialog = $state<ConfirmDialog>();
-  let descriptionInput = $state<HTMLInputElement>();
+  let descriptionTextArea = $state<HTMLTextAreaElement>();
   let startTimeInput = $state<DateTimeInput>();
 
   // Computation helpers
@@ -251,6 +251,17 @@
   </div>
 {/snippet}
 
+{#snippet multiLine(text: string)}
+  {@const lines = text.split("\n")}
+  {@const length = lines.length}
+  {#each lines as line, i (i)}
+    {line}
+    {#if i + 1 !== length}
+      <br />
+    {/if}
+  {/each}
+{/snippet}
+
 {#snippet inProgressWorkCard({ location, startTime, description }: IWorklog)}
   <div
     class="rounded-lg border border-primary-200 bg-primary-50 p-4 shadow-sm dark:border-primary-800 dark:bg-primary-950"
@@ -287,11 +298,16 @@
       {#if isEditingDescription}
         <div class="flex flex-col gap-2">
           <!-- svelte-ignore a11y_autofocus -->
-          <input class="p-2 text-sm" bind:this={descriptionInput} value={description} autofocus />
+          <textarea
+            class="p-2 text-sm"
+            bind:this={descriptionTextArea}
+            value={description}
+            autofocus
+          ></textarea>
           <div class="flex gap-2 self-start">
             <Button
               compact
-              onclick={() => descriptionInput && onChangeDescription(descriptionInput.value)}
+              onclick={() => descriptionTextArea && onChangeDescription(descriptionTextArea.value)}
             >
               {t("save")}
             </Button>
@@ -308,9 +324,11 @@
           onclick={() => (isEditingDescription = true)}
           title={t("click_to_edit")}
         >
-          {description == null || description.length === 0
-            ? t("description_placeholder")
-            : description}
+          {#if description == null || description.length === 0}
+            {t("description_placeholder")}
+          {:else}
+            {@render multiLine(description)}
+          {/if}
           <EditOutline class="hidden group-hover:block" />
         </button>
       {/if}
@@ -386,7 +404,11 @@
           {/if}
         </div>
       </div>
-      <span class="text-sm text-gray-500">{description}</span>
+      {#if description}
+        <span class="text-sm text-gray-500">
+          {@render multiLine(description)}
+        </span>
+      {/if}
       <span class="text-sm text-gray-500">
         {@render timeRange(startTime, endTime)}
       </span>
