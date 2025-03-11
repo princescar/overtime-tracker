@@ -193,9 +193,10 @@ export class WorklogService {
       worklog.startTime = parsedStartTime;
     }
 
-    if (description == null) {
-      worklog.description = undefined; // Delete the property when set to null.
-    } else {
+    if (description === null || description === "") {
+      // Delete the property only when explicitly set to null or empty string.
+      worklog.description = undefined;
+    } else if (description) {
       worklog.description = description;
     }
 
