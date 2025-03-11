@@ -41,6 +41,6 @@
   color={buttonVariants[variant].color}
   disabled={!!disabled || !!loading}
 >
-  {#if loading}<Spinner />{/if}
+  {#if loading}<Spinner class="mr-1" size={compact ? 2 : 4} />{/if}
   {@render children()}
 </Button>
