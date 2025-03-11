@@ -402,12 +402,14 @@ export class WorklogService {
       userId,
       deleted: { $ne: true }, // Don't consider deleted worklogs for overlap
       $or: [
+        // Overlap with completed work
         {
-          startTime: { $lte: endTime },
-          endTime: { $gte: startTime },
+          startTime: { $lt: endTime },
+          endTime: { $gt: startTime },
         },
+        // Overlap with in-progress work
         {
-          startTime: { $lte: endTime },
+          startTime: { $lt: endTime },
           endTime: { $exists: false },
         },
       ],
