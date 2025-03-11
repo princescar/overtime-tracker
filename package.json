@@ -10,13 +10,13 @@
     "dev": "vite dev",
     "build": "vite build",
     "build:vercel": "VERCEL=true vite build",
-    "lint": "eslint src --flag unstable_ts_config",
+    "lint": "eslint src",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "prepare": "husky"
   },
   "lint-staged": {
     "src/**/*.{ts,svelte}": [
-      "eslint --flag unstable_ts_config",
+      "eslint",
       "svelte-kit sync && svelte-check"
     ],
     "src/**/*.css": [
