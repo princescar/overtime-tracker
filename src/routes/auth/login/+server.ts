@@ -13,7 +13,7 @@ export const GET: RequestHandler = ({ cookies }) => {
   const url = buildAuthorizationUrl(oidcConfig, {
     redirect_uri,
     state,
-    scope: "openid",
+    scope: "openid profile email",
   });
   console.log("Redirect to auth URL with state", url.href, state);
 

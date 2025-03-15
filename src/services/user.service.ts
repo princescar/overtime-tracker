@@ -22,6 +22,35 @@ export class UserService {
   }
 
   /**
+   * Get user by email
+   */
+  async getUserByEmail(email: string): Promise<IUser | null> {
+    const user = await User.findOne({
+      email,
+      deleted: { $ne: true },
+    });
+    return user ? this.toUser(user) : null;
+  }
+
+  async modifyUser(id: string, user: Partial<Omit<IUser, "id" | "balance">>): Promise<IUser> {
+    const doc = await User.findById(id);
+    if (!doc) {
+      throw new Error("User not found");
+    }
+    if (user.oidcId !== undefined) {
+      doc.oidcId = user.oidcId;
+    }
+    if (user.email !== undefined) {
+      doc.email = user.email;
+    }
+    if (user.name !== undefined) {
+      doc.name = user.name;
+    }
+    await doc.save();
+    return this.toUser(doc);
+  }
+
+  /**
    * Transform user document to business object
    */
   private toUser(doc: IUserDocument): IUser {
