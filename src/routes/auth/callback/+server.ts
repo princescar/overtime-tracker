@@ -2,9 +2,11 @@ import { authorizationCodeGrant } from "openid-client";
 import { redirect } from "@sveltejs/kit";
 import { UserService } from "#/services/user.service";
 import { getOidcConfig } from "#/utils/oidc";
-import { getRequiredEnvVar } from "#/utils/env";
+import { getBooleanEnvVar, getRequiredEnvVar } from "#/utils/env";
 import { createSession, generateSessionToken } from "#/utils/session";
 import type { RequestHandler } from "./$types";
+
+const refreshUser = getBooleanEnvVar("REFRESH_USER_INFO_WHEN_LOGIN", false);
 
 const userService = new UserService();
 
@@ -16,14 +18,33 @@ export const GET: RequestHandler = async ({ request, cookies }) => {
   cookies.delete("oidc_state", { path: "/" }); // State can be used only once
 
   const tokenSet = await authorizationCodeGrant(oidcConfig, request, { expectedState: state });
-  const oidcId = tokenSet.claims()?.sub;
-  if (!oidcId) {
-    throw new Error("No OIDC id received");
+  const claims = tokenSet.claims();
+  if (!claims) {
+    throw new Error("No claims received");
   }
 
-  const user = await userService.getUserByOidcId(oidcId);
+  const { sub, email, name } = claims;
+  if (!sub) {
+    throw new Error("No ID received from oidc");
+  }
+
+  let user = await userService.getUserByOidcId(sub);
+  if (!user && email) {
+    // ID has been changed from the OIDC provider
+    // Try to find user by email
+    user = await userService.getUserByEmail(email as string);
+  }
+
   if (!user) {
-    throw new Error(`Cannot find user with OIDC ID ${oidcId}`);
+    throw new Error("User not found");
+  }
+
+  if (refreshUser) {
+    await userService.modifyUser(user.id, {
+      oidcId: sub,
+      email: email as string | undefined,
+      name: name as string | undefined,
+    });
   }
 
   const sessionToken = generateSessionToken();

@@ -9,12 +9,12 @@ export const initOidc = async () => {
   const clientSecret = getRequiredEnvVar("OIDC_CLIENT_SECRET");
 
   config = await discovery(new URL(server), clientId, clientSecret);
-  console.log("OIDC initialized", server, clientId);
+  console.log("Oidc initialized", server, clientId);
 };
 
 export const getOidcConfig = () => {
   if (!config) {
-    throw new Error("OIDC not initialized");
+    throw new Error("Oidc not initialized");
   }
 
   return config;
