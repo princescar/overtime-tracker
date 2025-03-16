@@ -299,7 +299,7 @@
         <div class="flex flex-col gap-2">
           <!-- svelte-ignore a11y_autofocus -->
           <textarea
-            class="p-2 text-sm"
+            class="rounded-lg p-2 text-sm"
             bind:this={descriptionTextArea}
             value={description}
             autofocus
