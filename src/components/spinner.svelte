@@ -1,7 +1,7 @@
 <script lang="ts">
 </script>
 
-<svg class="-ml-1 mr-3 inline h-[20px] w-[20px] animate-spin" fill="none" viewBox="0 0 24 24">
+<svg class="mr-3 -ml-1 inline h-[20px] w-[20px] animate-spin" fill="none" viewBox="0 0 24 24">
   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
   <path
     class="opacity-75"

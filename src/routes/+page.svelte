@@ -185,13 +185,13 @@
       {#if loading}
         <div class="flex justify-center">
           <div
-            class="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-primary-600"
+            class="border-t-primary-600 h-6 w-6 animate-spin rounded-full border-2 border-gray-300"
           ></div>
         </div>
       {:else if worklogStore.hasMoreCompleted}
         <div class="flex justify-center">
           <button
-            class="cursor-pointer text-primary-500"
+            class="text-primary-500 cursor-pointer"
             onclick={() => worklogStore.loadMoreCompleted()}
           >
             {t("load_more")}
@@ -227,7 +227,7 @@
 {/snippet}
 
 {#snippet balanceCard()}
-  <div class="rounded-lg border border-slate-300 p-4 shadow-sm dark:border-slate-700">
+  <div class="rounded-lg border border-slate-300 p-4 shadow-xs dark:border-slate-700">
     <div class="flex flex-col gap-4">
       <div class="text-lg font-medium">{t("time_remaining")}</div>
       <div
@@ -264,7 +264,7 @@
 
 {#snippet inProgressWorkCard({ location, startTime, description }: IWorklog)}
   <div
-    class="rounded-lg border border-primary-200 bg-primary-50 p-4 shadow-sm dark:border-primary-800 dark:bg-primary-950"
+    class="border-primary-200 bg-primary-50 dark:border-primary-800 dark:bg-primary-950 rounded-lg border p-4 shadow-xs"
   >
     <div class="flex h-full flex-col gap-3">
       <div class="flex items-start justify-between">
@@ -281,7 +281,7 @@
           />
         {:else}
           <button
-            class="group flex items-center gap-2 text-lg font-medium text-primary-800 hover:text-primary-900"
+            class="group text-primary-800 hover:text-primary-900 flex items-center gap-2 text-lg font-medium"
             onclick={() => (isEditingLocation = true)}
             title={t("click_to_edit")}
           >
@@ -290,7 +290,7 @@
           </button>
         {/if}
         <span
-          class="rounded-full bg-primary-100 px-2 py-1 text-xs font-medium uppercase text-primary-500 dark:bg-primary-900 dark:text-primary-300"
+          class="bg-primary-100 text-primary-500 dark:bg-primary-900 dark:text-primary-300 rounded-full px-2 py-1 text-xs font-medium uppercase"
         >
           {t("in_progress")}
         </span>
@@ -379,7 +379,7 @@
 
 {#snippet completedWorkCard({ id, location, startTime, endTime, description }: IWorklog)}
   <div
-    class="rounded-lg border border-gray-300 p-4 shadow-sm transition-opacity hover:border-gray-400 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800"
+    class="rounded-lg border border-gray-300 p-4 shadow-xs transition-opacity hover:border-gray-400 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800"
     class:opacity-50={deletingWorklogId === id}
     class:pointer-events-none={deletingWorklogId === id}
   >

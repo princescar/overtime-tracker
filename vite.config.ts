@@ -1,10 +1,9 @@
 import { fileURLToPath } from "url";
 import { readdirSync } from "fs";
-import { defineConfig } from "vite";
+import { defineConfig, type PluginOption } from "vite";
 import { sveltekit } from "@sveltejs/kit/vite";
 import { messageformat } from "rollup-plugin-messageformat";
-import tailwindcss from "tailwindcss";
-import autoprefixer from "autoprefixer";
+import tailwindcss from "@tailwindcss/vite";
 
 const messagesFolder = new URL("./src/messages/", import.meta.url);
 const supportedLanguages = readdirSync(messagesFolder)
@@ -21,13 +20,9 @@ export default defineConfig({
       locales: supportedLanguages,
     }),
     sveltekit(),
+    tailwindcss() as unknown as PluginOption,
   ],
   server: {
     port: 3000,
-  },
-  css: {
-    postcss: {
-      plugins: [tailwindcss, autoprefixer],
-    },
   },
 });

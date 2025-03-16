@@ -43,10 +43,10 @@
 {/snippet}
 
 {#snippet toastContainer()}
-  <div class="fixed bottom-4 right-4 z-50 flex flex-col gap-4 gap-4">
+  <div class="fixed right-4 bottom-4 z-50 flex flex-col gap-4 gap-4">
     {#each toastStore.toasts as [id, { message, type }] (id)}
       <div transition:fade={{ duration: 150 }}>
-        <Toast class="rounded" color={type === "error" ? "red" : undefined}>
+        <Toast class="rounded-sm" color={type === "error" ? "red" : undefined}>
           <svelte:fragment slot="icon">
             {#if type === "error"}
               <CloseCircleSolid class="h-5 w-5" />
