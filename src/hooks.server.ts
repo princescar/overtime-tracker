@@ -16,7 +16,6 @@ export const init: ServerInit = async () => {
 
 const anonymousPaths = ["/auth/callback", "/auth/login", "/api/cron"];
 
-// eslint-disable-next-line @typescript-eslint/unbound-method
 export const handle: Handle = async ({ event, resolve }) => {
   const language = await loadLanguage(event);
 

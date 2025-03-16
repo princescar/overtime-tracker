@@ -26,7 +26,7 @@
 </script>
 
 <div class={clsx("flex", className)} {...props}>
-  {#each options as option, index}
+  {#each options as option, index (index)}
     <button
       class={clsx(
         "grow cursor-pointer px-4 py-2 font-medium",
