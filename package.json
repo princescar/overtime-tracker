@@ -5,19 +5,20 @@
   "engines": {
     "node": "22.14.0"
   },
-  "packageManager": "pnpm@10.6.2",
+  "packageManager": "pnpm@10.6.4",
   "scripts": {
     "dev": "vite dev",
     "sync": "svelte-kit sync",
     "build": "vite build",
     "build:vercel": "VERCEL=true vite build",
-    "lint": "eslint src",
+    "lint": "oxlint && eslint src",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "prepare": "husky"
   },
   "lint-staged": {
     "src/**/*.{ts,svelte}": [
       "svelte-kit sync",
+      "oxlint",
       "eslint",
       "svelte-check"
     ],
@@ -41,6 +42,7 @@
     "dayjs": "^1.11.13",
     "dotenv": "^16.4.7",
     "eslint": "^9.22.0",
+    "eslint-plugin-oxlint": "^0.16.0",
     "eslint-plugin-prettier": "^5.2.3",
     "eslint-plugin-svelte": "^3.1.0",
     "flowbite": "^3.1.2",
@@ -53,6 +55,7 @@
     "lint-staged": "^15.5.0",
     "mongoose": "^8.12.1",
     "openid-client": "^6.3.4",
+    "oxlint": "^0.16.0",
     "prettier": "^3.5.3",
     "prettier-plugin-svelte": "^3.3.3",
     "prettier-plugin-tailwindcss": "^0.6.11",

@@ -12,6 +12,7 @@ export const request = async <T>(
       headers: {
         "Content-Type": "application/json",
       },
+      // oxlint-disable-next-line no-invalid-fetch-options
       body: requestBody ? JSON.stringify(requestBody) : undefined,
     });
 

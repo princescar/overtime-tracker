@@ -5,6 +5,7 @@ import svelte from "eslint-plugin-svelte";
 import ts from "typescript-eslint";
 import prettier from "eslint-plugin-prettier/recommended";
 import globals from "globals";
+import oxlint from 'eslint-plugin-oxlint';
 
 const gitignorePath = fileURLToPath(new URL("./.gitignore", import.meta.url));
 
@@ -42,4 +43,5 @@ export default ts.config(
       "@typescript-eslint/no-unsafe-argument": "off",
     },
   },
+  ...oxlint.configs["flat/recommended"],
 );
