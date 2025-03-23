@@ -9,6 +9,9 @@
   import { toastStore } from "#/stores/toast.svelte";
   import CompleteWorkModal from "./complete-work-modal.svelte";
   import LogCompletedWorkModal from "./log-completed-work-modal.svelte";
+  import WorkSummary from "#/components/work-summary.svelte";
+  import TimeRange from "#/components/time-range.svelte";
+  import MultiLineText from "#/components/multi-line-text.svelte";
   import Button from "#/components/button.svelte";
   import DateTimeInput from "#/components/date-time-input.svelte";
   import ToggleGroup from "#/components/toggle-group.svelte";
@@ -204,27 +207,7 @@
 
 <CompleteWorkModal bind:open={isCompleteWorkModalOpen} />
 <LogCompletedWorkModal bind:open={isLogCompletedWorkModalOpen} />
-
 <ConfirmDialog bind:this={confirmDialog} />
-
-{#snippet workSummary(location: WorkLocation, date: Date)}
-  {@const keys = {
-    [WorkLocation.HOME]: "work_at_home",
-    [WorkLocation.OFFICE]: "work_in_office",
-    [WorkLocation.BUSINESS_TRIP]: "business_trip",
-  }}
-  {t("work_location_on_day", { location: t(keys[location]), date })}
-{/snippet}
-
-{#snippet timeRange(startTime: Date, endTime?: Date | null)}
-  {#if !endTime}
-    {t("started_from", { startTime })}
-  {:else if dayjs(startTime).isSame(dayjs(endTime), "day")}
-    {t("same_day_start_end", { startTime, endTime })}
-  {:else}
-    {t("different_day_start_end", { startTime, endTime })}
-  {/if}
-{/snippet}
 
 {#snippet balanceCard()}
   <div class="rounded-lg border border-slate-300 p-4 shadow-xs dark:border-slate-700">
@@ -251,17 +234,6 @@
   </div>
 {/snippet}
 
-{#snippet multiLine(text: string)}
-  {@const lines = text.split("\n")}
-  {@const length = lines.length}
-  {#each lines as line, i (i)}
-    {line}
-    {#if i + 1 !== length}
-      <br />
-    {/if}
-  {/each}
-{/snippet}
-
 {#snippet inProgressWorkCard({ location, startTime, description }: IWorklog)}
   <div
     class="border-primary-200 bg-primary-50 dark:border-primary-800 dark:bg-primary-950 rounded-lg border p-4 shadow-xs"
@@ -285,7 +257,7 @@
             onclick={() => (isEditingLocation = true)}
             title={t("click_to_edit")}
           >
-            {@render workSummary(location, startTime)}
+            <WorkSummary {location} date={startTime} />
             <EditOutline class="hidden group-hover:block" />
           </button>
         {/if}
@@ -327,7 +299,7 @@
           {#if description == null || description.length === 0}
             {t("description_placeholder")}
           {:else}
-            {@render multiLine(description)}
+            <MultiLineText text={description} />
           {/if}
           <EditOutline class="hidden group-hover:block" />
         </button>
@@ -353,7 +325,7 @@
           onclick={() => (isEditingStartTime = true)}
           title={t("click_to_edit")}
         >
-          {@render timeRange(startTime)}
+          <TimeRange {startTime} />
           <EditOutline class="hidden group-hover:block" />
         </button>
       {/if}
@@ -386,7 +358,7 @@
     <div class="flex flex-col gap-2">
       <div class="flex items-center justify-between">
         <span class="text-lg">
-          {@render workSummary(location, startTime)}
+          <WorkSummary {location} date={startTime} />
         </span>
         <div class="group">
           {#if endTime}
@@ -406,11 +378,11 @@
       </div>
       {#if description}
         <span class="text-sm text-gray-500">
-          {@render multiLine(description)}
+          <MultiLineText text={description} />
         </span>
       {/if}
       <span class="text-sm text-gray-500">
-        {@render timeRange(startTime, endTime)}
+        <TimeRange {startTime} {endTime} />
       </span>
     </div>
   </div>
