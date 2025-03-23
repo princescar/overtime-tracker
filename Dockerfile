@@ -4,6 +4,7 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml /app/
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 COPY . /app
+RUN pnpm sync
 RUN pnpm build
 
 FROM gcr.io/distroless/nodejs22-debian12
