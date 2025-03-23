@@ -10,7 +10,6 @@
     "dev": "vite dev",
     "sync": "svelte-kit sync",
     "build": "vite build",
-    "build:vercel": "VERCEL=true vite build",
     "lint": "oxlint && eslint",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "prepare": "husky"
@@ -32,7 +31,6 @@
     "@oslojs/crypto": "^1.0.1",
     "@oslojs/encoding": "^1.1.0",
     "@sveltejs/adapter-node": "^5.2.12",
-    "@sveltejs/adapter-vercel": "^5.6.3",
     "@sveltejs/kit": "^2.20.2",
     "@sveltejs/vite-plugin-svelte": "^5.0.3",
     "@tailwindcss/vite": "^4.0.15",
