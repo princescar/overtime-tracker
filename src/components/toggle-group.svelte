@@ -36,7 +36,9 @@
         { "rounded-l-md": index === 0 },
         { "rounded-r-md": index === options.length - 1 },
       )}
-      onclick={() => handleValueChange(option.value)}
+      onclick={() => {
+        handleValueChange(option.value);
+      }}
     >
       {option.label}
     </button>
