@@ -318,7 +318,7 @@
         </div>
       {:else}
         <button
-          class="group flex items-center gap-1 self-start text-sm hover:text-gray-600"
+          class="group flex items-center gap-1 self-start text-left text-sm hover:text-gray-600"
           class:text-gray-500={!!description}
           class:text-gray-400={!description}
           onclick={() => (isEditingDescription = true)}
