@@ -15,7 +15,6 @@ export const GET: RequestHandler = async ({ request, cookies }) => {
   const oidcConfig = getOidcConfig();
 
   const state = cookies.get("oidc_state");
-  cookies.delete("oidc_state", { path: "/" }); // State can be used only once
 
   const tokenSet = await authorizationCodeGrant(oidcConfig, request, { expectedState: state });
   const claims = tokenSet.claims();
@@ -50,6 +49,7 @@ export const GET: RequestHandler = async ({ request, cookies }) => {
   const sessionToken = generateSessionToken();
   const session = await createSession(sessionToken, user.id);
 
+  cookies.delete("oidc_state", { path: "/" });
   cookies.set("token", sessionToken, {
     path: "/",
     expires: new Date(session.expiresAt),

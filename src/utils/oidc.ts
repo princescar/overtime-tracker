@@ -9,7 +9,7 @@ export const initOidc = async () => {
   const clientSecret = getRequiredEnvVar("OIDC_CLIENT_SECRET");
 
   config = await discovery(new URL(server), clientId, clientSecret);
-  console.log("Oidc initialized", server, clientId);
+  console.log("Oidc initialized", server);
 };
 
 export const getOidcConfig = () => {

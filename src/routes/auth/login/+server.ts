@@ -15,7 +15,7 @@ export const GET: RequestHandler = ({ cookies }) => {
     state,
     scope: "openid profile email",
   });
-  console.log("Redirect to auth URL with state", url.href, state);
+  console.log("Redirect to", url.href);
 
   cookies.set("oidc_state", state, { path: "/", maxAge: 5 * 60, secure: true, httpOnly: true });
   redirect(302, url);
