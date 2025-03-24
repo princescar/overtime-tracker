@@ -7,7 +7,7 @@ import oxlint from 'eslint-plugin-oxlint';
 import svelteConfig from './svelte.config.js';
 
 export default ts.config(
-  { ignores: ["**", "!src/**"] },
+  { ignores: ["**", "!src/**", "src/service-worker.ts"] },
   js.configs.recommended,
   ...ts.configs.strictTypeChecked,
   ...ts.configs.stylisticTypeChecked,
