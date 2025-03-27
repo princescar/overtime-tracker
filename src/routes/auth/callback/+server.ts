@@ -58,5 +58,5 @@ export const GET: RequestHandler = async ({ request, cookies }) => {
   });
 
   const returnTo = getRequiredEnvVar("APP_URL");
-  redirect(302, returnTo);
+  redirect(303, returnTo);
 };

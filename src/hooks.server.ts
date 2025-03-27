@@ -14,7 +14,13 @@ export const init: ServerInit = async () => {
   await Promise.all([connectDB(), initOidc()]);
 };
 
-const anonymousPaths = ["/auth/callback", "/auth/login", "/api/cron"];
+const anonymousPaths = [
+  "/login",
+  "/auth/callback",
+  "/auth/login",
+  "/api/preferences/language",
+  "/api/cron",
+];
 
 export const handle: Handle = async ({ event, resolve }) => {
   const language = await loadLanguage(event);
@@ -23,8 +29,8 @@ export const handle: Handle = async ({ event, resolve }) => {
   if (!isAuthenticated) {
     const { pathname } = new URL(event.request.url);
     if (!anonymousPaths.includes(pathname)) {
-      const loginUrl = getRequiredEnvVar("APP_URL") + "/auth/login";
-      return Response.redirect(loginUrl);
+      const loginUrl = getRequiredEnvVar("APP_URL") + "/login";
+      return Response.redirect(loginUrl, 303);
     }
   }
 

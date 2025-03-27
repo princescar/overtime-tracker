@@ -1,6 +1,8 @@
 language: "中文"
 overtime_tracker: "加班记录"
 overtime_tracker_description: "记录你的加班时间"
+sign_in: "登录"
+redirecting_to_sso: "正在跳转到 SSO 登录..."
 work_at_home: "在家办工"
 work_in_office: "去办公室工作"
 business_trip: "出差"
