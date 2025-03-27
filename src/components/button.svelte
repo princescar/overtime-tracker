@@ -36,7 +36,7 @@
 
 <Button
   {...props}
-  class={clsx(buttonVariants[variant].class, { "py-1": compact }, className)}
+  class={clsx("cursor-pointer", buttonVariants[variant].class, { "py-1": compact }, className)}
   size={compact ? "xs" : "md"}
   color={buttonVariants[variant].color}
   disabled={!!disabled || !!loading}
