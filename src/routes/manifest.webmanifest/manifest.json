@@ -1,0 +1,16 @@
+{
+  "name": "Overtime Tracker",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "logo_512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "background_color": "#f9fafb",
+  "display": "standalone",
+  "scope": "/",
+  "theme_color": "#f9fafb",
+  "description": "Track your overtime"
+}
