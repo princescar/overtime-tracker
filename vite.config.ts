@@ -18,9 +18,9 @@ export default defineConfig({
     messageformat({
       include: fileURLToPath(new URL("*.yaml", messagesFolder)),
       locales: supportedLanguages,
-    }),
+    }) as unknown as PluginOption,
     sveltekit(),
-    tailwindcss() as unknown as PluginOption,
+    tailwindcss(),
   ],
   server: {
     port: 3000,

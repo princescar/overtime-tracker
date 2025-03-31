@@ -16,7 +16,7 @@ export const detectLanguage = (
     const supportedLanguages = getSupportedLanguages();
     acceptLanguageParser.languages(supportedLanguages);
     language = acceptLanguageParser.get(acceptLanguage);
-    if (!language) language = supportedLanguages[0];
+    language ??= supportedLanguages[0];
   }
 
   return language;
