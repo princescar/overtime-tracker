@@ -3,10 +3,9 @@ import { redirect } from "@sveltejs/kit";
 import { UserService } from "#/services/user.service";
 import { getOidcConfig } from "#/utils/oidc";
 import { getBooleanEnvVar, getRequiredEnvVar } from "#/utils/env";
-import { createSession, generateSessionToken } from "#/utils/session";
 import type { RequestHandler } from "./$types";
 
-const refreshUser = getBooleanEnvVar("REFRESH_USER_INFO_WHEN_LOGIN", false);
+const refreshUser = getBooleanEnvVar("OIDC_REFRESH_USER", false);
 
 const userService = new UserService();
 
@@ -29,8 +28,7 @@ export const GET: RequestHandler = async ({ request, cookies }) => {
 
   let user = await userService.getUserByOidcId(sub);
   if (!user && email) {
-    // ID has been changed from the OIDC provider
-    // Try to find user by email
+    // Try to find user by email to handle OIDC provider transition
     user = await userService.getUserByEmail(email as string);
   }
 
@@ -46,13 +44,10 @@ export const GET: RequestHandler = async ({ request, cookies }) => {
     });
   }
 
-  const sessionToken = generateSessionToken();
-  const session = await createSession(sessionToken, user.id);
-
   cookies.delete("oidc_state", { path: "/" });
-  cookies.set("token", sessionToken, {
+  cookies.set("token", tokenSet.access_token, {
     path: "/",
-    expires: new Date(session.expiresAt),
+    maxAge: tokenSet.expiresIn() ?? 3600,
     httpOnly: true,
     secure: true,
   });

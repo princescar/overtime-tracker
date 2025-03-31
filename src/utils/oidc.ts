@@ -1,4 +1,4 @@
-import { type Configuration, discovery } from "openid-client";
+import { type Configuration, discovery, fetchUserInfo, skipSubjectCheck } from "openid-client";
 import { getRequiredEnvVar } from "./env";
 
 let config: Configuration | null = null;
@@ -18,4 +18,15 @@ export const getOidcConfig = () => {
   }
 
   return config;
+};
+
+export const validateAccessToken = async (token: string) => {
+  const config = getOidcConfig();
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
+    return await fetchUserInfo(config, token, skipSubjectCheck);
+  } catch (error) {
+    console.error("Error validating access token", error);
+    return null;
+  }
 };

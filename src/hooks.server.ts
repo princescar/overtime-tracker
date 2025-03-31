@@ -1,16 +1,16 @@
 import type { Handle, RequestEvent, ServerInit } from "@sveltejs/kit";
 import dotenv from "dotenv";
 import { connectDB } from "#/utils/db";
-import { redis } from "#/utils/redis";
-import { initOidc } from "#/utils/oidc";
+import { initOidc, validateAccessToken } from "#/utils/oidc";
 import { detectLanguage } from "#/utils/i18n";
 import { i18nStore } from "#/stores/i18n.svelte";
 import { getRequiredEnvVar } from "./utils/env";
-import { validateSessionToken } from "./utils/session";
+import { UserService } from "./services/user.service";
+
+const userService = new UserService();
 
 export const init: ServerInit = async () => {
   dotenv.config();
-  redis.connect();
   await Promise.all([connectDB(), initOidc()]);
 };
 
@@ -55,16 +55,20 @@ const authenticate = async ({ cookies, locals }: RequestEvent) => {
     return false;
   }
 
-  const session = await validateSessionToken(token);
-  if (!session) {
+  const oidcUser = await validateAccessToken(token);
+  if (!oidcUser) {
     return false;
   }
 
-  locals.user = { id: session.userId };
+  const user = await userService.getUserByOidcId(oidcUser.sub);
+  if (!user) {
+    return false;
+  }
 
+  locals.user = user;
   cookies.set("token", token, {
     path: "/",
-    expires: new Date(session.expiresAt),
+    maxAge: 60 * 60 * 24 * 7, // 1 week
     httpOnly: true,
     secure: true,
   });
