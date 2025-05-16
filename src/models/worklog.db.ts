@@ -11,7 +11,7 @@ export class Worklog {
   @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @Column()
+  @Column({ type: "varchar" })
   userId: string;
 
   @ManyToOne(() => User)
@@ -24,13 +24,13 @@ export class Worklog {
   @Column({ type: "timestamp", nullable: true })
   endTime?: Date;
 
-  @Column({ nullable: true })
+  @Column({ type: "varchar", nullable: true })
   description?: string;
 
   @Column({ type: "enum", enum: WorkLocation })
   location: WorkLocation;
 
-  @Column({ default: false })
+  @Column({ type: "boolean", default: false })
   deleted: boolean;
 
   @CreateDateColumn()

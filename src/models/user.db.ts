@@ -10,16 +10,16 @@ export class User {
   @Column({ type: "float", default: 0 })
   balance: number;
 
-  @Column({ nullable: true })
+  @Column({ type: "varchar", nullable: true })
   oidcId?: string;
 
-  @Column({ nullable: true })
+  @Column({ type: "varchar", nullable: true })
   email?: string;
 
-  @Column({ nullable: true })
+  @Column({ type: "varchar", nullable: true })
   name?: string;
 
-  @Column({ default: false })
+  @Column({ type: "boolean", default: false })
   deleted: boolean;
 
   @CreateDateColumn()

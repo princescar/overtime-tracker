@@ -10,7 +10,7 @@ export class BalanceHistory {
   @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @Column()
+  @Column({ type: "varchar" })
   userId: string;
 
   @ManyToOne(() => User)
@@ -26,10 +26,10 @@ export class BalanceHistory {
   @Column({ type: "enum", enum: BalanceChangeType })
   type: BalanceChangeType;
 
-  @Column()
+  @Column({ type: "varchar" })
   description: string;
 
-  @Column({ nullable: true })
+  @Column({ type: "varchar", nullable: true })
   worklogId?: string;
 
   @ManyToOne(() => Worklog, { nullable: true })

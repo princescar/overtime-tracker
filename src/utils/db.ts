@@ -1,7 +1,17 @@
 import { DataSource, type DataSourceOptions } from "typeorm";
 import { getRequiredEnvVar } from "./env";
 
-export const AppDataSource = new DataSource({} as any);
+export const AppDataSource = new DataSource({
+  type: "postgres", // Always specify a driver to avoid MissingDriverError
+  host: "localhost",
+  port: 5432,
+  username: "postgres",
+  password: "postgres",
+  database: "test",
+  synchronize: false,
+  logging: false,
+  entities: [], // Will be populated at runtime
+});
 
 const getDataSourceOptions = (): DataSourceOptions => {
   try {
