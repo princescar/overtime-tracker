@@ -1,7 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, Index, ManyToOne, JoinColumn } from "typeorm";
-import { type IWorklog, WorkLocation } from "#/types/worklog";
+import { type IWorklog, WorkLocation } from "../types/worklog";
 import { User } from "./user.db";
-import { AppDataSource } from "#/utils/db";
+import { AppDataSource } from "../utils/db";
 
 @Entity("worklogs")
 @Index(["userId", "endTime"]) // Index for finding in-progress worklog

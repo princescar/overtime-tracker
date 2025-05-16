@@ -1,18 +1,36 @@
-import { DataSource } from "typeorm";
+import { DataSource, type DataSourceOptions } from "typeorm";
 import { getRequiredEnvVar } from "./env";
 
-export const AppDataSource = new DataSource({
-  type: "postgres",
-  host: getRequiredEnvVar("POSTGRES_HOST"),
-  port: parseInt(getRequiredEnvVar("POSTGRES_PORT")),
-  username: getRequiredEnvVar("POSTGRES_USER"),
-  password: getRequiredEnvVar("POSTGRES_PASSWORD"),
-  database: getRequiredEnvVar("POSTGRES_DB"),
-  synchronize: true, // Set to false in production and use migrations
-  logging: false,
-  entities: [
-  ],
-});
+export const AppDataSource = new DataSource({} as any);
+
+const getDataSourceOptions = (): DataSourceOptions => {
+  try {
+    return {
+      type: "postgres",
+      host: process.env.POSTGRES_HOST || "localhost",
+      port: process.env.POSTGRES_PORT ? parseInt(process.env.POSTGRES_PORT) : 5432,
+      username: process.env.POSTGRES_USER || "postgres",
+      password: process.env.POSTGRES_PASSWORD || "postgres",
+      database: process.env.POSTGRES_DB || "overtime_tracker",
+      synchronize: true, // Set to false in production and use migrations
+      logging: false,
+      entities: [],
+    };
+  } catch (error) {
+    console.warn("Using minimal DB config for build");
+    return {
+      type: "postgres",
+      host: "localhost",
+      port: 5432,
+      username: "postgres",
+      password: "postgres",
+      database: "test",
+      synchronize: false,
+      logging: false,
+      entities: [],
+    };
+  }
+};
 
 let isConnected = false;
 
@@ -23,7 +41,19 @@ export async function connectDB() {
 
   try {
     console.log("Connecting to PostgreSQL...");
-    await AppDataSource.initialize();
+    
+    if (!AppDataSource.isInitialized) {
+      const completeOptions = {
+        ...getDataSourceOptions(),
+        entities: [
+          __dirname + '/../models/*.db.{ts,js}',
+        ]
+      };
+      
+      Object.assign(AppDataSource.options, completeOptions);
+      await AppDataSource.initialize();
+    }
+    
     isConnected = true;
     console.log("PostgreSQL connected successfully");
   } catch (error) {

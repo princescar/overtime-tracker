@@ -1,8 +1,8 @@
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, Index, ManyToOne, JoinColumn } from "typeorm";
-import { BalanceChangeType, type IBalanceHistory } from "#/types/balance";
+import { BalanceChangeType, type IBalanceHistory } from "../types/balance";
 import { User } from "./user.db";
 import { Worklog } from "./worklog.db";
-import { AppDataSource } from "#/utils/db";
+import { AppDataSource } from "../utils/db";
 
 @Entity("balance_history")
 @Index(["userId", "timestamp"]) // Index for querying user's balance history

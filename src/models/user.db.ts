@@ -1,6 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from "typeorm";
-import type { IUser } from "#/types/user";
-import { AppDataSource } from "#/utils/db";
+import type { IUser } from "../types/user";
+import { AppDataSource } from "../utils/db";
 
 @Entity("users")
 export class User {
