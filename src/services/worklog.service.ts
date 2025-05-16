@@ -1,8 +1,8 @@
 import dayjs from "dayjs";
-import type { FilterQuery } from "mongoose";
+import { QueryRunner, IsNull, Not, LessThan, LessThanOrEqual, MoreThanOrEqual, MoreThan, FindOptionsWhere } from "typeorm";
 import { BalanceService } from "./balance.service";
 import { type IWorklog, WorkLocation, WorklogStatus } from "#/types/worklog";
-import { type IWorklogDocument, Worklog } from "#/models/worklog.db";
+import { WorklogRepository, Worklog } from "#/models/worklog.db";
 import { validateDate, validateWorkLocation } from "#/utils/validation";
 import { withTransaction } from "#/utils/db";
 import { getRequiredNumericEnvVar } from "#/utils/env";
@@ -74,10 +74,12 @@ export class WorklogService {
     await this.balanceService.validateBalance(userId);
 
     // Check if user has any in-progress work
-    const inProgressWork = await Worklog.findOne({
-      userId,
-      endTime: { $exists: false },
-      deleted: { $ne: true },
+    const inProgressWork = await WorklogRepository.findOne({
+      where: {
+        userId,
+        endTime: IsNull(),
+        deleted: false,
+      },
     });
 
     if (inProgressWork) {
@@ -88,11 +90,13 @@ export class WorklogService {
     }
 
     // Check for overlapping work sessions
-    const overlappingWork = await Worklog.findOne({
-      userId,
-      startTime: { $lte: parsedStartTime },
-      endTime: { $gt: parsedStartTime },
-      deleted: { $ne: true },
+    const overlappingWork = await WorklogRepository.findOne({
+      where: {
+        userId,
+        startTime: LessThanOrEqual(parsedStartTime),
+        endTime: MoreThan(parsedStartTime),
+        deleted: false,
+      },
     });
 
     if (overlappingWork) {
@@ -103,14 +107,14 @@ export class WorklogService {
     }
 
     // Create new worklog
-    const worklog = await Worklog.create({
-      userId,
-      startTime: parsedStartTime,
-      description,
-      location,
-    });
-
-    return this.toWorklog(worklog);
+    const worklog = new Worklog();
+    worklog.userId = userId;
+    worklog.startTime = parsedStartTime;
+    worklog.description = description;
+    worklog.location = location;
+    
+    const savedWorklog = await WorklogRepository.save(worklog);
+    return savedWorklog.toDTO();
   }
 
   /**
@@ -124,11 +128,14 @@ export class WorklogService {
     const parsedEndTime = dayjs(endTime).startOf("minute").toDate();
 
     // Find and validate worklog
-    const worklog = await Worklog.findOne({
-      _id: worklogId,
-      userId,
-      deleted: { $ne: true },
+    const worklog = await WorklogRepository.findOne({
+      where: {
+        id: worklogId,
+        userId,
+        deleted: false,
+      },
     });
+    
     if (!worklog) {
       throw new WorklogError(WorklogErrorCode.WORKLOG_NOT_FOUND, "Worklog not found");
     }
@@ -149,18 +156,19 @@ export class WorklogService {
     // Calculate cost
     const cost = this.calculateCost(worklog.startTime, parsedEndTime);
 
-    const savedWorklog = await withTransaction(async (session) => {
+    const savedWorklog = await withTransaction(async (queryRunner: QueryRunner) => {
       // Update worklog
+      const worklogRepository = queryRunner.manager.getRepository(Worklog);
       worklog.endTime = parsedEndTime;
-      const savedWorklog = await worklog.save({ session });
+      const savedWorklog = await worklogRepository.save(worklog);
 
       // Deduct cost from user's balance atomically with balance check
-      await this.balanceService.deductWorklogCost(userId, cost, worklogId, session);
+      await this.balanceService.deductWorklogCost(userId, cost, worklogId, queryRunner);
 
       return savedWorklog;
     });
 
-    return this.toWorklog(savedWorklog);
+    return savedWorklog.toDTO();
   }
 
   /**
@@ -169,11 +177,14 @@ export class WorklogService {
   async modifyWork(input: ModifyWorkInput): Promise<IWorklog> {
     const { userId, worklogId, startTime, description, location } = input;
 
-    const worklog = await Worklog.findOne({
-      _id: worklogId,
-      userId,
-      deleted: { $ne: true },
+    const worklog = await WorklogRepository.findOne({
+      where: {
+        id: worklogId,
+        userId,
+        deleted: false,
+      },
     });
+    
     if (!worklog) {
       throw new WorklogError(WorklogErrorCode.WORKLOG_NOT_FOUND, "Worklog not found");
     }
@@ -205,8 +216,8 @@ export class WorklogService {
       worklog.location = location;
     }
 
-    const savedWorklog = await worklog.save();
-    return this.toWorklog(savedWorklog);
+    const savedWorklog = await WorklogRepository.save(worklog);
+    return savedWorklog.toDTO();
   }
 
   /**
@@ -231,29 +242,26 @@ export class WorklogService {
     // Calculate cost
     const cost = this.calculateCost(parsedStartTime, parsedEndTime);
 
-    const savedWorklog = await withTransaction(async (session) => {
-      // Create completed worklog
-      const [worklog] = await Worklog.create(
-        [
-          {
-            userId,
-            startTime: parsedStartTime,
-            endTime: parsedEndTime,
-            description,
-            location,
-            cost,
-          },
-        ],
-        { session },
-      );
+    const savedWorklog = await withTransaction(async (queryRunner: QueryRunner) => {
+      // Create worklog
+      const worklogRepository = queryRunner.manager.getRepository(Worklog);
+      
+      const worklog = new Worklog();
+      worklog.userId = userId;
+      worklog.startTime = parsedStartTime;
+      worklog.endTime = parsedEndTime;
+      worklog.description = description;
+      worklog.location = location;
+      
+      const savedWorklog = await worklogRepository.save(worklog);
 
       // Deduct cost from user's balance atomically with balance check
-      await this.balanceService.deductWorklogCost(userId, cost, worklog.id as string, session);
+      await this.balanceService.deductWorklogCost(userId, cost, savedWorklog.id, queryRunner);
 
-      return worklog;
+      return savedWorklog;
     });
 
-    return this.toWorklog(savedWorklog);
+    return savedWorklog.toDTO();
   }
 
   /**
@@ -262,23 +270,27 @@ export class WorklogService {
   async deleteWork(input: DeleteWorkInput): Promise<void> {
     const { worklogId, userId } = input;
 
-    const worklog = await Worklog.findOne({ _id: worklogId, userId });
+    const worklog = await WorklogRepository.findOne({ 
+      where: { id: worklogId, userId } 
+    });
+    
     if (!worklog) {
       throw new WorklogError(WorklogErrorCode.WORKLOG_NOT_FOUND, "Worklog not found");
     }
 
-    await withTransaction(async (session) => {
+    await withTransaction(async (queryRunner: QueryRunner) => {
       if (worklog.endTime) {
         // Calculate cost
         const cost = this.calculateCost(worklog.startTime, worklog.endTime);
 
         // Revert cost deduction from balance
-        await this.balanceService.revertWorklogCost(userId, cost, worklogId, session);
+        await this.balanceService.revertWorklogCost(userId, cost, worklogId, queryRunner);
       }
 
       // Mark as deleted instead of removing
+      const worklogRepository = queryRunner.manager.getRepository(Worklog);
       worklog.deleted = true;
-      await worklog.save({ session });
+      await worklogRepository.save(worklog);
     });
   }
 
@@ -288,15 +300,19 @@ export class WorklogService {
   async getWorklog(input: GetWorklogInput): Promise<IWorklog> {
     const { userId, worklogId } = input;
 
-    const worklog = await Worklog.findOne({
-      _id: worklogId,
-      userId,
-      deleted: { $ne: true },
+    const worklog = await WorklogRepository.findOne({
+      where: {
+        id: worklogId,
+        userId,
+        deleted: false,
+      },
     });
+    
     if (!worklog) {
       throw new WorklogError(WorklogErrorCode.WORKLOG_NOT_FOUND, "Worklog not found");
     }
-    return this.toWorklog(worklog);
+    
+    return worklog.toDTO();
   }
 
   /**
@@ -305,9 +321,9 @@ export class WorklogService {
   async queryWorklogs(input: QueryWorklogsInput): Promise<IWorklog[]> {
     const { userId, startDate, endDate, status, skip = 0, limit = 10 } = input;
 
-    const query: FilterQuery<IWorklogDocument> = {
+    const where: FindOptionsWhere<Worklog> = {
       userId,
-      deleted: { $ne: true }, // Filter out deleted worklogs
+      deleted: false,
     };
 
     if (startDate || endDate) {
@@ -323,17 +339,30 @@ export class WorklogService {
         );
       }
 
-      query.$or = [{ startTime: { $lte: parsedEndDate } }, { endTime: { $gte: parsedStartDate } }];
+      if (parsedStartDate && parsedEndDate) {
+        where.startTime = LessThanOrEqual(parsedEndDate);
+        where.endTime = MoreThanOrEqual(parsedStartDate);
+      } else if (parsedStartDate) {
+        where.startTime = MoreThanOrEqual(parsedStartDate);
+      } else if (parsedEndDate) {
+        where.startTime = LessThanOrEqual(parsedEndDate);
+      }
     }
 
     if (status === WorklogStatus.IN_PROGRESS) {
-      query.$or = [{ endTime: { $exists: false } }, { endTime: null }];
+      where.endTime = IsNull();
     } else if (status === WorklogStatus.COMPLETED) {
-      query.$and = [{ endTime: { $exists: true } }, { endTime: { $ne: null } }];
+      where.endTime = Not(IsNull());
     }
 
-    const worklogs = await Worklog.find(query).sort({ startTime: -1 }).skip(skip).limit(limit);
-    return worklogs.map((doc) => this.toWorklog(doc));
+    const worklogs = await WorklogRepository.find({
+      where,
+      order: { startTime: "DESC" },
+      skip,
+      take: limit,
+    });
+    
+    return worklogs.map((worklog) => worklog.toDTO());
   }
 
   /**
@@ -342,9 +371,9 @@ export class WorklogService {
   async countWorklogs(input: Omit<QueryWorklogsInput, "skip" | "limit">): Promise<number> {
     const { userId, startDate, endDate, status } = input;
 
-    const query: FilterQuery<IWorklogDocument> = {
+    const where: FindOptionsWhere<Worklog> = {
       userId,
-      deleted: { $ne: true }, // Filter out deleted worklogs
+      deleted: false,
     };
 
     if (startDate || endDate) {
@@ -360,16 +389,23 @@ export class WorklogService {
         );
       }
 
-      query.$or = [{ startTime: { $lte: parsedEndDate } }, { endTime: { $gte: parsedStartDate } }];
+      if (parsedStartDate && parsedEndDate) {
+        where.startTime = LessThanOrEqual(parsedEndDate);
+        where.endTime = MoreThanOrEqual(parsedStartDate);
+      } else if (parsedStartDate) {
+        where.startTime = MoreThanOrEqual(parsedStartDate);
+      } else if (parsedEndDate) {
+        where.startTime = LessThanOrEqual(parsedEndDate);
+      }
     }
 
     if (status === WorklogStatus.IN_PROGRESS) {
-      query.$or = [{ endTime: { $exists: false } }, { endTime: null }];
+      where.endTime = IsNull();
     } else if (status === WorklogStatus.COMPLETED) {
-      query.$and = [{ endTime: { $exists: true } }, { endTime: { $ne: null } }];
+      where.endTime = Not(IsNull());
     }
 
-    return Worklog.countDocuments(query);
+    return WorklogRepository.count({ where });
   }
 
   private balanceService = new BalanceService();
@@ -398,28 +434,30 @@ export class WorklogService {
     endTime: Date,
     excludeWorklogId?: string,
   ): Promise<void> {
-    const query: FilterQuery<IWorklogDocument> = {
+    const where: FindOptionsWhere<Worklog> = {
       userId,
-      deleted: { $ne: true }, // Don't consider deleted worklogs for overlap
-      $or: [
-        // Overlap with completed work
-        {
-          startTime: { $lt: endTime },
-          endTime: { $gt: startTime },
-        },
-        // Overlap with in-progress work
-        {
-          startTime: { $lt: endTime },
-          endTime: { $exists: false },
-        },
-      ],
+      deleted: false,
     };
 
     if (excludeWorklogId) {
-      query._id = { $ne: excludeWorklogId };
+      where.id = Not(excludeWorklogId);
     }
 
-    const overlappingWork = await Worklog.findOne(query);
+    const overlappingWork = await WorklogRepository.findOne({
+      where: [
+        {
+          ...where,
+          startTime: LessThan(endTime),
+          endTime: MoreThan(startTime),
+        },
+        {
+          ...where,
+          startTime: LessThan(endTime),
+          endTime: IsNull(),
+        },
+      ],
+    });
+
     if (overlappingWork) {
       throw new WorklogError(
         WorklogErrorCode.WORKLOG_OVERLAP,
@@ -439,20 +477,6 @@ export class WorklogService {
     return minutes * costRate;
   }
 
-  /**
-   * Transform worklog document to business object
-   */
-  private toWorklog(doc: IWorklogDocument): IWorklog {
-    return {
-      // eslint-disable-next-line @typescript-eslint/no-base-to-string
-      id: doc._id.toString(),
-      userId: doc.userId,
-      startTime: doc.startTime,
-      endTime: doc.endTime,
-      description: doc.description,
-      location: doc.location,
-    };
-  }
 }
 
 enum WorklogErrorCode {

@@ -1,7 +1,7 @@
-import type { ClientSession, FilterQuery } from "mongoose";
+import { QueryRunner, Between, LessThanOrEqual, MoreThanOrEqual, FindOptionsWhere } from "typeorm";
 import { BalanceChangeType } from "#/types/balance";
-import { User } from "#/models/user.db";
-import { BalanceHistory, type IBalanceHistoryDocument } from "#/models/balance-history.db";
+import { UserRepository, User } from "#/models/user.db";
+import { BalanceHistoryRepository, BalanceHistory } from "#/models/balance-history.db";
 
 interface GetBalanceHistoryInput {
   userId: string;
@@ -22,7 +22,7 @@ export class BalanceService {
    * Get user's current balance
    */
   async getBalance(userId: string): Promise<number> {
-    const user = await User.findById(userId);
+    const user = await UserRepository.findOne({ where: { id: userId } });
     if (!user) {
       throw new Error("User not found");
     }
@@ -43,39 +43,38 @@ export class BalanceService {
    * Increment user balance by amount, and record the change in history
    * Must be called within a transaction
    */
-  async incrementBalance(input: IncrementBalanceInput, session: ClientSession): Promise<void> {
+  async incrementBalance(input: IncrementBalanceInput, queryRunner: QueryRunner): Promise<void> {
     const { userId, amount, type, description, worklogId } = input;
 
     // Update the balance
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      { $inc: { balance: amount } },
-      { session, new: true },
-    );
-
-    if (!updatedUser) {
+    const userRepository = queryRunner.manager.getRepository(User);
+    
+    const user = await userRepository.findOne({ where: { id: userId } });
+    if (!user) {
       throw new Error("User not found");
     }
+    
+    // Update balance
+    user.balance += amount;
+    
+    await userRepository.save(user);
 
     // Check if balance is still sufficient after update
-    if (updatedUser.balance < 0) {
+    if (user.balance < 0) {
       throw new Error("Balance would become insufficient after this operation");
     }
 
     // Create balance history entry
-    await BalanceHistory.create(
-      [
-        {
-          userId,
-          amount,
-          type,
-          description,
-          worklogId,
-          timestamp: new Date(),
-        },
-      ],
-      { session },
-    );
+    const balanceHistoryRepository = queryRunner.manager.getRepository(BalanceHistory);
+    const balanceHistory = new BalanceHistory();
+    balanceHistory.userId = userId;
+    balanceHistory.amount = amount;
+    balanceHistory.type = type;
+    balanceHistory.description = description;
+    balanceHistory.worklogId = worklogId;
+    balanceHistory.timestamp = new Date();
+    
+    await balanceHistoryRepository.save(balanceHistory);
   }
 
   /**
@@ -85,7 +84,7 @@ export class BalanceService {
     userId: string,
     amount: number,
     worklogId: string,
-    session: ClientSession,
+    queryRunner: QueryRunner,
   ): Promise<void> {
     await this.incrementBalance(
       {
@@ -95,7 +94,7 @@ export class BalanceService {
         description: "Balance deducted for worklog entry",
         worklogId,
       },
-      session,
+      queryRunner,
     );
   }
 
@@ -106,7 +105,7 @@ export class BalanceService {
     userId: string,
     amount: number,
     worklogId: string,
-    session: ClientSession,
+    queryRunner: QueryRunner,
   ): Promise<void> {
     await this.incrementBalance(
       {
@@ -116,7 +115,7 @@ export class BalanceService {
         description: "Revert balance deduction for worklog entry",
         worklogId,
       },
-      session,
+      queryRunner,
     );
   }
 
@@ -126,12 +125,20 @@ export class BalanceService {
   async getBalanceHistory(input: GetBalanceHistoryInput) {
     const { userId, startDate, endDate } = input;
 
-    const query: FilterQuery<IBalanceHistoryDocument> = { userId };
+    const where: FindOptionsWhere<BalanceHistory> = { userId };
 
-    if (startDate || endDate) {
-      query.$or = [{ timestamp: { $lte: endDate } }, { timestamp: { $gte: startDate } }];
+    if (startDate && endDate) {
+      where.timestamp = Between(startDate, endDate);
+    } else if (startDate) {
+      where.timestamp = MoreThanOrEqual(startDate);
+    } else if (endDate) {
+      where.timestamp = LessThanOrEqual(endDate);
     }
 
-    return BalanceHistory.find(query).sort({ timestamp: -1 }).populate("worklogId");
+    return BalanceHistoryRepository.find({
+      where,
+      order: { timestamp: "DESC" },
+      relations: ["worklog"]
+    });
   }
 }

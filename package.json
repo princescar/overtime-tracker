@@ -67,5 +67,11 @@
       "cookie": "^0.7.2",
       "esbuild": "^0.25.1"
     }
+  },
+  "dependencies": {
+    "@types/pg": "^8.15.2",
+    "pg": "^8.16.0",
+    "reflect-metadata": "^0.2.2",
+    "typeorm": "^0.3.24"
   }
 }
