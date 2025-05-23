@@ -1,5 +1,6 @@
 import dayjs from "dayjs";
-import { QueryRunner, IsNull, Not, LessThan, LessThanOrEqual, MoreThanOrEqual, MoreThan, FindOptionsWhere } from "typeorm";
+import type { QueryRunner, FindOptionsWhere } from "typeorm";
+import { IsNull, Not, LessThan, LessThanOrEqual, MoreThanOrEqual, MoreThan } from "typeorm";
 import { BalanceService } from "./balance.service";
 import { type IWorklog, WorkLocation, WorklogStatus } from "#/types/worklog";
 import { WorklogRepository, Worklog } from "#/models/worklog.db";
@@ -112,7 +113,6 @@ export class WorklogService {
     worklog.startTime = parsedStartTime;
     worklog.description = description;
     worklog.location = location;
-    
     const savedWorklog = await WorklogRepository.save(worklog);
     return savedWorklog.toDTO();
   }
@@ -135,7 +135,6 @@ export class WorklogService {
         deleted: false,
       },
     });
-    
     if (!worklog) {
       throw new WorklogError(WorklogErrorCode.WORKLOG_NOT_FOUND, "Worklog not found");
     }
@@ -184,7 +183,6 @@ export class WorklogService {
         deleted: false,
       },
     });
-    
     if (!worklog) {
       throw new WorklogError(WorklogErrorCode.WORKLOG_NOT_FOUND, "Worklog not found");
     }
@@ -245,14 +243,14 @@ export class WorklogService {
     const savedWorklog = await withTransaction(async (queryRunner: QueryRunner) => {
       // Create worklog
       const worklogRepository = queryRunner.manager.getRepository(Worklog);
-      
+
       const worklog = new Worklog();
       worklog.userId = userId;
       worklog.startTime = parsedStartTime;
       worklog.endTime = parsedEndTime;
       worklog.description = description;
       worklog.location = location;
-      
+
       const savedWorklog = await worklogRepository.save(worklog);
 
       // Deduct cost from user's balance atomically with balance check
@@ -270,10 +268,9 @@ export class WorklogService {
   async deleteWork(input: DeleteWorkInput): Promise<void> {
     const { worklogId, userId } = input;
 
-    const worklog = await WorklogRepository.findOne({ 
-      where: { id: worklogId, userId } 
+    const worklog = await WorklogRepository.findOne({
+      where: { id: worklogId, userId },
     });
-    
     if (!worklog) {
       throw new WorklogError(WorklogErrorCode.WORKLOG_NOT_FOUND, "Worklog not found");
     }
@@ -307,11 +304,9 @@ export class WorklogService {
         deleted: false,
       },
     });
-    
     if (!worklog) {
       throw new WorklogError(WorklogErrorCode.WORKLOG_NOT_FOUND, "Worklog not found");
     }
-    
     return worklog.toDTO();
   }
 
@@ -361,7 +356,7 @@ export class WorklogService {
       skip,
       take: limit,
     });
-    
+
     return worklogs.map((worklog) => worklog.toDTO());
   }
 
@@ -476,7 +471,6 @@ export class WorklogService {
     const costRate = getRequiredNumericEnvVar("WORK_COST_PER_MINUTE");
     return minutes * costRate;
   }
-
 }
 
 enum WorklogErrorCode {

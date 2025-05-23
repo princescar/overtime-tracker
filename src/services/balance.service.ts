@@ -1,4 +1,5 @@
-import { QueryRunner, Between, LessThanOrEqual, MoreThanOrEqual, FindOptionsWhere } from "typeorm";
+import type { QueryRunner, FindOptionsWhere } from "typeorm";
+import { Between, LessThanOrEqual, MoreThanOrEqual } from "typeorm";
 import { BalanceChangeType } from "#/types/balance";
 import { UserRepository, User } from "#/models/user.db";
 import { BalanceHistoryRepository, BalanceHistory } from "#/models/balance-history.db";
@@ -48,15 +49,13 @@ export class BalanceService {
 
     // Update the balance
     const userRepository = queryRunner.manager.getRepository(User);
-    
     const user = await userRepository.findOne({ where: { id: userId } });
     if (!user) {
       throw new Error("User not found");
     }
-    
+
     // Update balance
     user.balance += amount;
-    
     await userRepository.save(user);
 
     // Check if balance is still sufficient after update
@@ -73,7 +72,7 @@ export class BalanceService {
     balanceHistory.description = description;
     balanceHistory.worklogId = worklogId;
     balanceHistory.timestamp = new Date();
-    
+
     await balanceHistoryRepository.save(balanceHistory);
   }
 
@@ -138,7 +137,7 @@ export class BalanceService {
     return BalanceHistoryRepository.find({
       where,
       order: { timestamp: "DESC" },
-      relations: ["worklog"]
+      relations: ["worklog"],
     });
   }
 }

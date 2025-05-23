@@ -1,5 +1,4 @@
-import { DataSource, type DataSourceOptions } from "typeorm";
-import { getRequiredEnvVar } from "./env";
+import { DataSource, type DataSourceOptions, type QueryRunner } from "typeorm";
 
 export const AppDataSource = new DataSource({
   type: "postgres", // Always specify a driver to avoid MissingDriverError
@@ -17,16 +16,16 @@ const getDataSourceOptions = (): DataSourceOptions => {
   try {
     return {
       type: "postgres",
-      host: process.env.POSTGRES_HOST || "localhost",
+      host: process.env.POSTGRES_HOST ?? "localhost",
       port: process.env.POSTGRES_PORT ? parseInt(process.env.POSTGRES_PORT) : 5432,
-      username: process.env.POSTGRES_USER || "postgres",
-      password: process.env.POSTGRES_PASSWORD || "postgres",
-      database: process.env.POSTGRES_DB || "overtime_tracker",
+      username: process.env.POSTGRES_USER ?? "postgres",
+      password: process.env.POSTGRES_PASSWORD ?? "postgres",
+      database: process.env.POSTGRES_DB ?? "overtime_tracker",
       synchronize: true, // Set to false in production and use migrations
       logging: false,
       entities: [],
     };
-  } catch (error) {
+  } catch (_) {
     console.warn("Using minimal DB config for build");
     return {
       type: "postgres",
@@ -51,19 +50,16 @@ export async function connectDB() {
 
   try {
     console.log("Connecting to PostgreSQL...");
-    
+
     if (!AppDataSource.isInitialized) {
       const completeOptions = {
         ...getDataSourceOptions(),
-        entities: [
-          __dirname + '/../models/*.db.{ts,js}',
-        ]
+        entities: [__dirname + "/../models/*.db.{ts,js}"],
       };
-      
+
       Object.assign(AppDataSource.options, completeOptions);
       await AppDataSource.initialize();
     }
-    
     isConnected = true;
     console.log("PostgreSQL connected successfully");
   } catch (error) {
@@ -78,12 +74,12 @@ export async function connectDB() {
  * @returns Result of the operation
  */
 export async function withTransaction<T>(
-  operation: (queryRunner: any) => Promise<T>,
+  operation: (queryRunner: QueryRunner) => Promise<T>,
 ): Promise<T> {
   const queryRunner = AppDataSource.createQueryRunner();
   await queryRunner.connect();
   await queryRunner.startTransaction();
-  
+
   try {
     const result = await operation(queryRunner);
     await queryRunner.commitTransaction();

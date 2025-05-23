@@ -1,4 +1,4 @@
-import { UserRepository, User } from "#/models/user.db";
+import { UserRepository } from "#/models/user.db";
 import type { IUser } from "#/types/user";
 
 export class UserService {
@@ -6,8 +6,8 @@ export class UserService {
    * Get all users
    */
   async getAllUsers(): Promise<IUser[]> {
-    const users = await UserRepository.find({ 
-      where: { deleted: false }
+    const users = await UserRepository.find({
+      where: { deleted: false },
     });
     return users.map((user) => user.toDTO());
   }
@@ -40,13 +40,13 @@ export class UserService {
 
   async modifyUser(id: string, userData: Partial<Omit<IUser, "id" | "balance">>): Promise<IUser> {
     const user = await UserRepository.findOne({
-      where: { id, deleted: false }
+      where: { id, deleted: false },
     });
-    
+
     if (!user) {
       throw new Error("User not found");
     }
-    
+
     if (userData.oidcId !== undefined) {
       user.oidcId = userData.oidcId;
     }
@@ -56,7 +56,7 @@ export class UserService {
     if (userData.name !== undefined) {
       user.name = userData.name;
     }
-    
+
     await UserRepository.save(user);
     return user.toDTO();
   }
