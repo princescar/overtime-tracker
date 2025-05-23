@@ -1,3 +1,4 @@
+import "reflect-metadata";
 import type { Handle, RequestEvent, ServerInit } from "@sveltejs/kit";
 import dotenv from "dotenv";
 import { connectDB } from "#/utils/db";
